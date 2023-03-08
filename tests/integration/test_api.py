@@ -19,8 +19,8 @@ import asyncio
 import multiprocessing
 import time
 
+import httpx
 import pytest
-import requests
 
 from ghga_service_commons.api import ApiConfigBase, run_server
 
@@ -44,7 +44,7 @@ async def test_run_server():
 
     # run test query:
     try:
-        response = requests.get(f"http://{config.host}:{config.port}/greet")
+        response = httpx.get(f"http://{config.host}:{config.port}/greet")
     except Exception as exc:
         raise exc
     finally:
