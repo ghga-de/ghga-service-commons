@@ -75,7 +75,7 @@ EXCLUDE = [
 EXCLUDE_ENDINGS = [
     "html",
     "ini",
-    "jinja2",
+    "jinja",
     "json",
     "md",
     "pub",
