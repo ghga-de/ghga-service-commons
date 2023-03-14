@@ -5,5 +5,5 @@ Please execute the example in this repository so that the config yaml is
 
 Usage:
 ```bash
-python3 -m hello_world_web_server
+python -m hello_world_web_server
 ```
