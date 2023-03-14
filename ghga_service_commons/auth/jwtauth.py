@@ -69,10 +69,7 @@ class JWTAuthContextProvider(AuthContextProtocol[AuthContext_co]):
     @classmethod
     @asynccontextmanager
     async def construct(
-        cls,
-        *,
-        config: JWTAuthConfig,
-        context_class: type[AuthContext_co],  # type: ignore
+        cls, *, config: JWTAuthConfig, context_class: type[AuthContext_co]
     ):
         """Make this usable as an async dependency."""
         yield cls(config=config, context_class=context_class)
