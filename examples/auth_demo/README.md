@@ -1,7 +1,9 @@
 # Example of a REST API using token based authentication and authorization
 
 This is a REST API that protects several methods in a simple core application
-using JSON web tokens for authentication and authorization. Run the API as follows:
+using JSON web tokens for authentication and authorization. The configuration
+and the core application are injected in a way that is compatible with the DI
+mechanism used by the hexkit framework. Run the API as follows:
 
 ```bash
 pip install -r requirements.txt

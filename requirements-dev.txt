@@ -21,4 +21,3 @@ mkdocs-material-extensions==1.1.1
 mkdocstrings==0.19.1
 mkdocstrings-python-legacy==0.2.3
 typer==0.7.0
-hexkit==0.9.1
