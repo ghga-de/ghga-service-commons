@@ -16,11 +16,12 @@
 
 """Create access tokens for testing."""
 
-from datetime import datetime
 from typing import NamedTuple
 
 from auth_demo.auth.config import AUTH_KEY_PAIR
 from jwcrypto import jwt
+
+from ghga_service_commons.utils.utc_dates import now_as_utc
 
 
 class UserInfo(NamedTuple):
@@ -34,7 +35,7 @@ EXAMPLE_USERS: list[UserInfo] = [
     UserInfo("Ada Lovelace", False),
     UserInfo("Grace Hopper", True),
     UserInfo("Charles Babbage", False),
-    UserInfo("Alan Turin", True),
+    UserInfo("Alan Turing", True),
 ]
 
 
@@ -42,7 +43,7 @@ def create_token(user: UserInfo) -> str:
     """Create an auth token that can be used for testing."""
     key = AUTH_KEY_PAIR
     header = {"alg": "ES256"}
-    iat = int(datetime.now().timestamp())
+    iat = int(now_as_utc().timestamp())
     exp = iat + 60 * 10  # valid for 10 minutes
     claims = {**user._asdict(), "iat": iat, "exp": exp}
     token = jwt.JWT(header=header, claims=claims)

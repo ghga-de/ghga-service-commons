@@ -18,7 +18,7 @@
 
 import json
 from contextlib import asynccontextmanager
-from typing import Any, Mapping, Optional, Sequence, Union
+from typing import Any, Optional
 
 from jwcrypto import jwk, jwt
 from jwcrypto.common import JWException
@@ -29,11 +29,6 @@ from ghga_service_commons.auth.context import AuthContext_co, AuthContextProtoco
 __all__ = ["JWTAuthConfig", "JWTAuthContextProvider"]
 
 
-JsonObject = Mapping[
-    str, Union[int, float, str, bool, Sequence[Any], Mapping[str, Any]]
-]
-
-
 class JWTAuthConfig(BaseSettings):
     """JWT based auth specific config params.
 
@@ -41,9 +36,9 @@ class JWTAuthConfig(BaseSettings):
     JWT based authentication in the backend.
     """
 
-    auth_key: JsonObject = Field(
+    auth_key: str = Field(
         ...,
-        example={"crv": "P-256", "kty": "EC", "x": "...", "y": "..."},
+        example='{"crv": "P-256", "kty": "EC", "x": "...", "y": "..."}',
         description="The public key for validating the token signature.",
     )
     auth_algs: list[str] = Field(
@@ -86,8 +81,8 @@ class JWTAuthContextProvider(AuthContextProtocol[AuthContext_co]):
             if key.has_private:
                 raise ValueError("Private key found, this should not be added here.")
         except Exception as error:
-            raise self.AuthContextError(
-                "No valid token signing key found in the configuration:" f" {error}"
+            raise self.AuthContextValidationError(
+                f"No valid token signing key found in the configuration: {error}"
             ) from error
         self._key = key
         self._algs = config.auth_algs
@@ -120,7 +115,7 @@ class JWTAuthContextProvider(AuthContextProtocol[AuthContext_co]):
                 f"Invalid auth context: {error}"
             ) from error
 
-    def _decode_and_validate_token(self, token: str) -> JsonObject:
+    def _decode_and_validate_token(self, token: str) -> dict[str, Any]:
         """Decode and validate the given JSON Web Token.
 
         Returns the decoded claims in the token as a dictionary if valid.

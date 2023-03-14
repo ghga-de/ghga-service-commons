@@ -1,2 +1,2 @@
-ghga_service_commons[api]
+../..[api]
 hexkit

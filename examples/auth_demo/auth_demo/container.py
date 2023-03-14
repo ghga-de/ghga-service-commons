@@ -39,5 +39,5 @@ class Container(ContainerBase):
     hangout = get_constructor(Hangout, config=config)
 
     auth_provider = get_constructor(
-        JWTAuthContextProvider, config=config, context_class=AuthContext
+        JWTAuthContextProvider[AuthContext], config=config, context_class=AuthContext
     )

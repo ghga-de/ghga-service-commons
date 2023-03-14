@@ -24,6 +24,7 @@ from auth_demo.router import router
 from fastapi import FastAPI
 
 from ghga_service_commons.api import configure_app, run_server
+from ghga_service_commons.utils.utc_dates import assert_tz_is_utc
 
 
 def get_configured_container(config: Config) -> Container:
@@ -46,4 +47,5 @@ async def configure_and_run_server():
 
 def run():
     """Main entry point for running the server."""
+    assert_tz_is_utc()
     asyncio.run(configure_and_run_server())

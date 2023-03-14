@@ -30,9 +30,6 @@ AuthContext_co = TypeVar("AuthContext_co", bound=BaseModel, covariant=True)
 class AuthContextProtocol(Protocol[AuthContext_co]):
     """A protocol for retrieving an authentication and authorization context."""
 
-    class AuthContextError(RuntimeError):
-        """Error when retrieving the authentication and authorization context failed."""
-
     class AuthContextValidationError(RuntimeError):
         """Error that is raised when the underlying token is invalid."""
 
@@ -41,8 +38,8 @@ class AuthContextProtocol(Protocol[AuthContext_co]):
 
         The protocol is independent of the underlying serialization format.
 
-        Raises an AuthContextValidationError if the provided token cannot
-        establish a valid authentication and authorization context.
+        Raises an AuthContextValidationError if the provided token cannot establish
+        a valid authentication and authorization context.
 
         Calling this may involve fetching public keys or other data over the network.
         """

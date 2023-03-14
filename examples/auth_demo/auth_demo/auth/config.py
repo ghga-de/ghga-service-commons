@@ -18,20 +18,20 @@
 
 __all__ = ["AuthContext", "AuthConfig"]
 
-from datetime import datetime
-from typing import Any, cast
+from typing import Any
 
 from auth_demo.util import generate_jwk
 from pydantic import BaseModel, Field
 
-from ghga_service_commons.auth.jwtauth import JsonObject, JWTAuthConfig
+from ghga_service_commons.auth.jwtauth import JWTAuthConfig
+from ghga_service_commons.utils.utc_dates import DateTimeUTC
 
 
 class AuthContext(BaseModel):
     """Example auth context."""
 
     name: str = Field(..., description="The name of the user")
-    expires: datetime = Field(..., description="The expiration date of this context")
+    expires: DateTimeUTC = Field(..., description="The expiration date of this context")
     is_vip: bool = Field(False, description="Whether the user is a VIP")
 
 
@@ -40,8 +40,8 @@ AUTH_KEY_PAIR = generate_jwk()
 
 
 class AuthConfig(JWTAuthConfig):
-    """Config parameters and their defaults for the example auth conftext."""
+    """Config parameters and their defaults for the example auth context."""
 
-    auth_key = cast(JsonObject, AUTH_KEY_PAIR.export(private_key=False))
+    auth_key: str = AUTH_KEY_PAIR.export(private_key=False)
     auth_check_claims: dict[str, Any] = {"name": None, "exp": None}
     auth_map_claims: dict[str, str] = {"exp": "expires"}

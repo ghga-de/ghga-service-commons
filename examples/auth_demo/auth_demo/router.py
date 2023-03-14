@@ -49,7 +49,7 @@ async def status(
     auth_context: AuthContext = get_auth,
 ):
     """This endpoint shows the current login status."""
-    expires = auth_context.expires.ctime() if auth_context else None
+    expires = str(auth_context.expires) if auth_context else None
     return {"status": f"logged in until {expires}" if expires else "logged out"}
 
 

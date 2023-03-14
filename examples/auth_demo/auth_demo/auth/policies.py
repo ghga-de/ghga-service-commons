@@ -50,7 +50,7 @@ async def get_auth_token(
         return None
     try:
         return await auth_provider.get_context(token)
-    except AuthContextProtocol.AuthContextError as error:
+    except auth_provider.AuthContextValidationError as error:
         raise HTTPException(
             status_code=HTTP_403_FORBIDDEN,
             detail="Invalid authentication credentials",
@@ -83,8 +83,8 @@ def get_require_auth_token(vip_only: bool = False):
         try:
             context = await auth_provider.get_context(token)
             if not context:
-                raise auth_provider.AuthContextError("Not authenticated")
-        except auth_provider.AuthContextError as error:
+                raise auth_provider.AuthContextValidationError("Not authenticated")
+        except auth_provider.AuthContextValidationError as error:
             raise HTTPException(
                 status_code=HTTP_403_FORBIDDEN,
                 detail="Invalid authentication credentials",
