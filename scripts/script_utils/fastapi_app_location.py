@@ -12,15 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
-"""Utils for fixture handling"""
+"""Used to define the location of the main FastAPI app object."""
 
-from pathlib import Path
+# flake8: noqa
+# pylint: skip-file
 
-import yaml
-
-
-def read_yaml(path: Path) -> dict:
-    """Read yaml file and return content as dict."""
-    with open(path, "r") as file_:
-        return yaml.safe_load(file_)
+# Please adapt to package structure:
+from my_microservice.api.main import app

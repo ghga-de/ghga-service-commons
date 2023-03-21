@@ -20,10 +20,11 @@ from typing import Optional, Protocol, TypeVar
 
 from pydantic import BaseModel
 
-__all__ = ["AuthContext_co", "AuthContextProtocol"]
+__all__ = ["AuthContext", "AuthContext_co", "AuthContextProtocol"]
 
 
-# type variable for handling different kinds of auth contexts
+# type variables for handling different kinds of auth contexts
+AuthContext = TypeVar("AuthContext", bound=BaseModel)
 AuthContext_co = TypeVar("AuthContext_co", bound=BaseModel, covariant=True)
 
 
