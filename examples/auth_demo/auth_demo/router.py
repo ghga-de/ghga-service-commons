@@ -25,8 +25,6 @@ from auth_demo.users import create_example_users
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 
-provide_hangout = Depends(Provide[Container.hangout])
-
 router = APIRouter()
 
 
@@ -59,7 +57,7 @@ async def status(
 @inject
 async def reception(
     auth_context: Optional[DemoAuthContext] = get_auth,
-    hangout: HangoutPort = provide_hangout,
+    hangout: HangoutPort = Depends(Provide[Container.hangout]),
 ):
     """This endpoint is freely available, but personalized."""
     name = auth_context.name if auth_context else None
@@ -69,7 +67,8 @@ async def reception(
 @router.get("/lobby")
 @inject
 async def protected(
-    auth_context: DemoAuthContext = require_auth, hangout: HangoutPort = provide_hangout
+    auth_context: DemoAuthContext = require_auth,
+    hangout: HangoutPort = Depends(Provide[Container.hangout]),
 ):
     """This endpoint requires authentication."""
     return {"message": await hangout.lobby(auth_context.name)}
@@ -78,7 +77,8 @@ async def protected(
 @router.get("/lounge")
 @inject
 async def admin(
-    auth_context: DemoAuthContext = require_vip, hangout: HangoutPort = provide_hangout
+    auth_context: DemoAuthContext = require_vip,
+    hangout: HangoutPort = Depends(Provide[Container.hangout]),
 ):
     """This endpoint requires VIP status."""
     return {"message": await hangout.lounge(auth_context.name)}
