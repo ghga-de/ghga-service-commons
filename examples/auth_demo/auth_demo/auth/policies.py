@@ -44,7 +44,8 @@ async def get_auth_token(
     ),
 ) -> Optional[DemoAuthContext]:
     """Get an authentication and authorization context using FastAPI."""
-    return await get_auth_context_using_credentials(credentials, auth_provider)
+    context = await get_auth_context_using_credentials(credentials, auth_provider)
+    return context  # workaround mypy issue #12156
 
 
 @inject
