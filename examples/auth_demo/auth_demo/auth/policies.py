@@ -37,7 +37,7 @@ __all__ = ["DemoAuthContext", "get_auth", "require_auth", "require_vip"]
 
 
 @inject
-async def get_auth_token(
+async def get_auth_context(
     credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
     auth_provider: AuthContextProtocol[DemoAuthContext] = Depends(
         Provide[Container.auth_provider]
@@ -49,7 +49,7 @@ async def get_auth_token(
 
 
 @inject
-async def require_auth_token(
+async def require_auth_context(
     credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=True)),
     auth_provider: AuthContextProtocol[DemoAuthContext] = Depends(
         Provide[Container.auth_provider]
@@ -65,7 +65,7 @@ def check_vip(context: DemoAuthContext) -> bool:
 
 
 @inject
-async def require_vip_auth_token(
+async def require_vip_context(
     credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=True)),
     auth_provider: AuthContextProtocol[DemoAuthContext] = Depends(
         Provide[Container.auth_provider]
@@ -78,10 +78,10 @@ async def require_vip_auth_token(
 
 
 # policy for getting an auth token without requiring its existence
-get_auth = Security(get_auth_token)
+get_auth = Security(get_auth_context)
 
 # policy for requiring and getting an auth token
-require_auth = Security(require_auth_token)
+require_auth = Security(require_auth_context)
 
 # policy fo requiring and getting an auth token with VIP status
-require_vip = Security(require_vip_auth_token)
+require_vip = Security(require_vip_context)
