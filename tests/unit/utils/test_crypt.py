@@ -19,14 +19,14 @@
 
 import base64
 
+from nacl.public import PrivateKey, PublicKey
 from pytest import raises
 
 from ghga_service_commons.utils.crypt import (
-    decode_private_key,
-    decode_public_key,
+    KeyPair,
+    decode_key,
     decrypt,
-    encode_private_key,
-    encode_public_key,
+    encode_key,
     encrypt,
     generate_key_pair,
 )
@@ -35,75 +35,142 @@ from ghga_service_commons.utils.crypt import (
 def test_generate_key_pair():
     """Test that random key pairs can be generated."""
     key_pair = generate_key_pair()
-    assert hasattr(key_pair, "public_key")
+    assert isinstance(key_pair, KeyPair)
+    assert key_pair.private != key_pair.public
+    assert len(key_pair.private) == len(key_pair.public)
     another_key_pair = generate_key_pair()
-    assert key_pair != another_key_pair
-    assert bytes(key_pair) != bytes(another_key_pair)
-    assert bytes(key_pair.public_key) != bytes(another_key_pair.public_key)
+    assert another_key_pair.private != another_key_pair.public
+    assert len(another_key_pair.private) == len(another_key_pair.public)
+    assert another_key_pair != key_pair
+    assert key_pair.private != another_key_pair.private
+    assert key_pair.public != another_key_pair.public
 
 
-def test_encode_key_pair():
-    """Test that key pairs can be base64 encoded."""
-    key_pair = generate_key_pair()
-    encoded_private_key = encode_private_key(key_pair)
-    assert isinstance(encoded_private_key, str)
-    assert encoded_private_key.isascii()
-    assert len(encoded_private_key) == 44
-    encoded_public_key = encode_public_key(key_pair)
-    assert isinstance(encoded_public_key, str)
-    assert encoded_public_key.isascii()
-    assert len(encoded_public_key) == 44
-    assert encode_public_key != encode_private_key
+def test_decode_valid_key():
+    """Test that valid base64 encoded keys can be decoded."""
+    assert decode_key(base64.b64encode(b"foo4" * 8).decode("ascii")) == b"foo4" * 8
 
 
-def test_decode_valid_private_key():
-    """Test that valid base64 encoded private keys can be decoded."""
-    key = decode_private_key(base64.b64encode(b"foo4" * 8).decode("ascii"))
-    assert bytes(key) == b"foo4" * 8
-
-
-def test_decode_invalid_private_key():
-    """Test that invalid private keys can be detected."""
+def test_decode_invalid_key():
+    """Test that invalid base64 encoded can be detected."""
     with raises(ValueError, match="Incorrect padding"):
-        decode_private_key("foo")
-    with raises(ValueError, match="raw private key must be 32 bytes long"):
-        decode_private_key(base64.b64encode(b"foo").decode("ascii"))
+        decode_key("foo")
+    with raises(ValueError, match="Invalid key"):
+        decode_key(base64.b64encode(b"foo").decode("ascii"))
 
 
-def test_decode_valid_public_key():
-    """Test that valid base64 encoded public keys can be decoded."""
-    key = decode_public_key(base64.b64encode(b"foo4" * 8).decode("ascii"))
-    assert bytes(key) == b"foo4" * 8
+def test_encode_valid_key():
+    """Test that valid raw keys can be encoded."""
+    assert encode_key(b"foo4" * 8) == base64.b64encode(b"foo4" * 8).decode("ascii")
 
 
-def test_decode_invalid_public_key():
-    """Test that invalid public keys can be detected."""
-    with raises(ValueError, match="Incorrect padding"):
-        decode_public_key("foo")
-    with raises(ValueError, match="raw public key must be 32 bytes long"):
-        decode_public_key(base64.b64encode(b"foo").decode("ascii"))
-    decode_public_key(base64.b64encode(b"foo4" * 8).decode("ascii"))
+def test_encode_invalid_key():
+    """Test that invalid raw keys can be detected."""
+    with raises(ValueError, match="Invalid key"):
+        encode_key(b"foo")
 
 
-def test_decode_generated_key_pair():
-    """Test that a generated key pair can be encoded and decoded."""
+def test_encode_and_decode_key_pair():
+    """Test that keys from key pairs can be base64 encoded and decoded."""
     key_pair = generate_key_pair()
-    decode_private_key(encode_private_key(key_pair))
-    decode_public_key(encode_public_key(key_pair))
+    for raw in key_pair:
+        encoded = encode_key(raw)
+        assert isinstance(encoded, str)
+        assert encoded.isascii()
+        assert len(encoded) > len(raw)
+        assert decode_key(encoded) == raw
 
 
-def test_encryption_and_decryption():
-    """Test encrypting and decrypting a message."""
+def test_encryption_and_decryption_with_raw_keys():
+    """Test encrypting and decrypting a message with raw keys."""
     key_pair = generate_key_pair()
-    private_key = encode_private_key(key_pair)
-    assert isinstance(private_key, str)
-    public_key = encode_public_key(key_pair)
-    assert isinstance(public_key, str)
 
     message = "Foo bar baz!"
-    encrypted = encrypt(message, public_key)
+
+    encrypted = encrypt(message, key_pair.public)
     assert isinstance(encrypted, str)
     assert encrypted != message
-    decrypted = decrypt(encrypted, private_key)
+
+    decrypted = decrypt(encrypted, key_pair.private)
+    assert isinstance(decrypted, str)
+    assert decrypted == message
+
+
+def test_encryption_and_decryption_with_encoded_keys():
+    """Test encrypting and decrypting a message with base64 encoded keys."""
+    key_pair = generate_key_pair()
+
+    message = "Foo bar baz!"
+
+    encrypted = encrypt(message, encode_key(key_pair.public))
+    assert isinstance(encrypted, str)
+    assert encrypted != message
+
+    decrypted = decrypt(encrypted, encode_key(key_pair.private))
+    assert isinstance(decrypted, str)
+    assert decrypted == message
+
+
+def test_encryption_and_decryption_with_key_objects():
+    """Test encrypting and decrypting a message with key objects."""
+    key_pair = generate_key_pair()
+
+    message = "Foo bar baz!"
+
+    encrypted = encrypt(message, PublicKey(key_pair.public))
+    assert isinstance(encrypted, str)
+    assert encrypted != message
+
+    decrypted = decrypt(encrypted, PrivateKey(key_pair.private))
+    assert isinstance(decrypted, str)
+    assert decrypted == message
+
+
+def test_encryption_with_encoded_and_decryption_with_raw_key():
+    """Test encrypting with base64 encoded key and decrypting with raw key."""
+    key_pair = generate_key_pair()
+
+    message = "Foo bar baz!"
+
+    encrypted = encrypt(message, encode_key(key_pair.public))
+    assert isinstance(encrypted, str)
+    assert encrypted != message
+
+    decrypted = decrypt(encrypted, key_pair.private)
+    assert isinstance(decrypted, str)
+    assert decrypted == message
+
+
+def test_encrypt_same_message_twice():
+    """Test encrypting the same message message twice.
+
+    Note that the results should be different because ephemeral keys are used
+    to actually encrypt the messages.
+    """
+    key_pair = generate_key_pair()
+
+    message = "Foo bar baz!"
+
+    encrypted = encrypt(message, key_pair.public)
+    assert encrypted != message
+    encrypted_again = encrypt(message, key_pair.public)
+    assert encrypted_again != message
+
+    assert encrypted != encrypted_again
+    assert decrypt(encrypted, key_pair.private) == message
+    assert decrypt(encrypted_again, key_pair.private) == message
+
+
+def test_encrypted_is_encoded_and_raw_data_can_be_decrypted():
+    """Test that encrypted data is base64 encoded and that raw data cab be decrypted."""
+    key_pair = generate_key_pair()
+
+    message = "Foo bar baz!"
+
+    encrypted = encrypt(message, key_pair.public)
+    assert isinstance(encrypted, str)
+    encrypted_raw = base64.b64decode(encrypted)
+
+    decrypted = decrypt(encrypted_raw, key_pair.private)
     assert isinstance(decrypted, str)
     assert decrypted == message

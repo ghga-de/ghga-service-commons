@@ -17,79 +17,101 @@
 """Helper functions for Crypt4GH compliant encryption."""
 
 import base64
+from typing import NamedTuple, Union
 
 from nacl.public import PrivateKey, PublicKey, SealedBox
 
 __all__ = [
     "generate_key_pair",
-    "encode_private_key",
-    "encode_public_key",
-    "decode_private_key",
-    "decode_public_key",
+    "encode_key",
+    "decode_key",
     "decrypt",
     "encrypt",
+    "KeyPair",
 ]
 
 
-def generate_key_pair() -> PrivateKey:
+class KeyPair(NamedTuple):
+    """A Curve25519 key pair as used in Crypt4GH."""
+
+    private: bytes
+    public: bytes
+
+
+def generate_key_pair() -> KeyPair:
     """Generate a Curve25519 key pair (as used in Crypt4GH)."""
-    return PrivateKey.generate()
+    keys = PrivateKey.generate()
+    return KeyPair(bytes(keys), bytes(keys.public_key))
 
 
-def encode_private_key(key_pair: PrivateKey) -> str:
-    """Get base64 encoded private key from the given key pair."""
-    return base64.b64encode(bytes(key_pair)).decode("ascii")
+def encode_key(key: bytes) -> str:
+    """Base64 encode a private or public key.
+
+    Note that the private and public keys we use have the same size,
+    so the same function with the same check can be used for both.
+
+    Raises ValueError if it is not a bytes string or has a wrong size.
+    """
+    if not isinstance(key, bytes) or len(key) != PublicKey.SIZE:
+        raise ValueError("Invalid key")
+    return base64.b64encode(key).decode("ascii")
 
 
-def encode_public_key(key_pair: PrivateKey) -> str:
-    """Get base64 encoded public key from the given key pair."""
-    return base64.b64encode(bytes(key_pair.public_key)).decode("ascii")
+def decode_key(key: str) -> bytes:
+    """Base64 decode a private or public key.
 
+    Note that the private and public keys we use have the same size,
+    so the same function with the same check can be used for both.
 
-def decode_private_key(key: str) -> PrivateKey:
-    """Get the given base64 encoded private key as a PrivateKey object.
-
-    This function can be used to check whether this is a valid base64 encoded string
-    of the right length; it raises a ValueError if this is not the case.
+    Raises ValueError if it is not a base64 encoded string or has a wrong size.
     """
     try:
         decoded_key = base64.b64decode(key)
     except base64.binascii.Error as error:  # type: ignore
         raise ValueError(str(error)) from error
-    if len(decoded_key) != 32:
-        raise ValueError("The raw private key must be 32 bytes long.")
-    return PrivateKey(decoded_key)
+    if len(decoded_key) != PublicKey.SIZE:
+        raise ValueError("Invalid key")
+    return decoded_key
 
 
-def decode_public_key(key: str) -> PublicKey:
-    """Get the given base64 encoded public key as a PublicKey object.
+def decrypt(
+    data: Union[bytes, str], key: Union[bytes, str, PrivateKey], encoding: str = "ascii"
+) -> str:
+    """Decrypt a base64 encoded or bytes string using a private Crypt4GH key.
 
-    This function can be used to check whether this is a valid base64 encoded string
-    of the right length; it raises a ValueError if this is not the case.
+    The result will be decoded as a native string using the given encoding.
+
+    Raises a ValueError if the given key cannot be used for decryption.
     """
-    try:
-        decoded_key = base64.b64decode(key)
-    except base64.binascii.Error as error:  # type: ignore
-        raise ValueError(str(error)) from error
-    if len(decoded_key) != 32:
-        raise ValueError("The raw public key must be 32 bytes long.")
-    return PublicKey(decoded_key)
+    if isinstance(key, str):
+        key = decode_key(key)
+    if isinstance(key, bytes):
+        key = PrivateKey(key)
+    if not isinstance(key, PrivateKey):
+        raise ValueError("Invalid key")
+    sealed_box = SealedBox(key)
+    if isinstance(data, str):
+        data = base64.b64decode(data)
+    decrypted_data = sealed_box.decrypt(data)
+    return decrypted_data.decode(encoding)
 
 
-def decrypt(data: str, key: str) -> str:
-    """Decrypt a str of ASCII characters with a base64 encoded private Crypt4GH key."""
-    sealed_box = SealedBox(decode_private_key(key))
-    encrypted_bytes = base64.b64decode(data)
-    decrypted_bytes = sealed_box.decrypt(encrypted_bytes)
-    return decrypted_bytes.decode("ascii")
+def encrypt(
+    data: str, key: Union[bytes, str, PublicKey], encoding: str = "ascii"
+) -> str:
+    """Encrypt a str with given encoding using a public Crypt4GH key.
 
+    The result will be returned as a base64 encoded string.
 
-def encrypt(data: str, key: str) -> str:
-    """Encrypt a str of ASCII characters with a base64 encoded public Crypt4GH key.
-
-    The result will be base64 encoded again.
+    Raises a ValueError if the given key cannot be used for encryption.
     """
-    sealed_box = SealedBox(decode_public_key(key))
-    decoded_data = bytes(data, encoding="ascii")
-    encrypted = sealed_box.encrypt(decoded_data)
-    return base64.b64encode(encrypted).decode("ascii")
+    if isinstance(key, str):
+        key = decode_key(key)
+    if isinstance(key, bytes):
+        key = PublicKey(key)
+    if not isinstance(key, PublicKey):
+        raise ValueError("Invalid key")
+    sealed_box = SealedBox(key)
+    decoded_data = bytes(data, encoding=encoding)
+    encrypted_data = sealed_box.encrypt(decoded_data)
+    return base64.b64encode(encrypted_data).decode("ascii")
