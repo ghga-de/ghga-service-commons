@@ -162,7 +162,7 @@ def test_encrypt_same_message_twice():
 
 
 def test_encrypted_is_encoded_and_raw_data_can_be_decrypted():
-    """Test that encrypted data is base64 encoded and that raw data cab be decrypted."""
+    """Test that encrypted data is base64 encoded and that raw data can be decrypted."""
     key_pair = generate_key_pair()
 
     message = "Foo bar baz!"
