@@ -75,7 +75,7 @@ def decode_key(key: str) -> bytes:
 
 
 def decrypt(
-    data: Union[bytes, str], key: Union[bytes, str, PrivateKey], encoding: str = "ascii"
+    data: Union[bytes, str], key: Union[bytes, str, PrivateKey], encoding: str = "utf-8"
 ) -> str:
     """Decrypt a base64 encoded or bytes string using a private Crypt4GH key.
 
@@ -97,7 +97,7 @@ def decrypt(
 
 
 def encrypt(
-    data: str, key: Union[bytes, str, PublicKey], encoding: str = "ascii"
+    data: str, key: Union[bytes, str, PublicKey], encoding: str = "utf-8"
 ) -> str:
     """Encrypt a str with given encoding using a public Crypt4GH key.
 

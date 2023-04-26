@@ -174,3 +174,18 @@ def test_encrypted_is_encoded_and_raw_data_can_be_decrypted():
     decrypted = decrypt(encrypted_raw, key_pair.private)
     assert isinstance(decrypted, str)
     assert decrypted == message
+
+
+def test_encryption_and_decryption_with_non_ascii_data():
+    """Test encrypting and decrypting a non ASCII message with raw keys."""
+    key_pair = generate_key_pair()
+
+    message = "Ƒø båřȑ bāç‼"
+
+    encrypted = encrypt(message, key_pair.public)
+    assert isinstance(encrypted, str)
+    assert encrypted != message
+
+    decrypted = decrypt(encrypted, key_pair.private)
+    assert isinstance(decrypted, str)
+    assert decrypted == message
