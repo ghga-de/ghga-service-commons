@@ -181,10 +181,11 @@ def test_encryption_and_decryption_with_non_ascii_data():
     key_pair = generate_key_pair()
 
     message = "Ƒø båřȑ bāç‼"
+    assert not message.isascii()
 
     encrypted = encrypt(message, key_pair.public)
     assert isinstance(encrypted, str)
-    assert encrypted != message
+    assert encrypted.isascii()
 
     decrypted = decrypt(encrypted, key_pair.private)
     assert isinstance(decrypted, str)
