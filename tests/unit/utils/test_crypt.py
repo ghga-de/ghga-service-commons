@@ -126,6 +126,22 @@ def test_encryption_and_decryption_with_key_objects():
     assert decrypted == message
 
 
+def test_encryption_and_decryption_with_private_key_only():
+    """Test encrypting and decrypting with private key and derived public key."""
+    key_pair = generate_key_pair()
+    private_key = PrivateKey(key_pair.private)
+
+    message = "Foo bar baz!"
+
+    encrypted = encrypt(message, private_key)
+    assert isinstance(encrypted, str)
+    assert encrypted != message
+
+    decrypted = decrypt(encrypted, private_key)
+    assert isinstance(decrypted, str)
+    assert decrypted == message
+
+
 def test_encryption_with_encoded_and_decryption_with_raw_key():
     """Test encrypting with base64 encoded key and decrypting with raw key."""
     key_pair = generate_key_pair()

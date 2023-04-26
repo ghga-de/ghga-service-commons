@@ -39,7 +39,7 @@ class KeyPair(NamedTuple):
 
 
 def generate_key_pair() -> KeyPair:
-    """Generate a Curve25519 key pair (as used in Crypt4GH)."""
+    """Generate a Curve25519 key pair as used in Crypt4GH."""
     keys = PrivateKey.generate()
     return KeyPair(bytes(keys), bytes(keys.public_key))
 
@@ -97,18 +97,23 @@ def decrypt(
 
 
 def encrypt(
-    data: str, key: Union[bytes, str, PublicKey], encoding: str = "utf-8"
+    data: str, key: Union[bytes, str, PrivateKey, PublicKey], encoding: str = "utf-8"
 ) -> str:
     """Encrypt a str with given encoding using a public Crypt4GH key.
 
     The result will be returned as a base64 encoded string.
 
     Raises a ValueError if the given key cannot be used for encryption.
+
+    A PrivateKey object can be passed as key as well, then the derived public key
+    will be used for the encryption.
     """
     if isinstance(key, str):
         key = decode_key(key)
     if isinstance(key, bytes):
         key = PublicKey(key)
+    if isinstance(key, PrivateKey):
+        key = key.public_key
     if not isinstance(key, PublicKey):
         raise ValueError("Invalid key")
     sealed_box = SealedBox(key)
