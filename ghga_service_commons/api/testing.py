@@ -56,5 +56,4 @@ class AsyncTestClient(httpx.AsyncClient):
     def __init__(self, app: Callable[..., Any]):
         """Initialize with ASGI app."""
 
-        port = get_free_port()
-        super().__init__(app=app, base_url=f"http://localhost:{port}")
+        super().__init__(app=app, base_url="http://localhost:8080")
