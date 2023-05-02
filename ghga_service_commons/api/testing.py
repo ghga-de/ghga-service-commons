@@ -48,7 +48,7 @@ class AsyncTestClient(httpx.AsyncClient):
         async with AsyncTestClient(app) as client:
             response = await client.get("/")
 
-    assert response.status == 200
+    assert response.status_code == 200
     assert response.json() == "Hello World"
     ```
     """
