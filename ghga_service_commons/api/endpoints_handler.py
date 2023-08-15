@@ -220,7 +220,12 @@ class EndpointsHandler:
                     matched_url.groupdict(),
                 )
 
-        raise self.NoMatchingUrl(url=url, method=method)
+        raise HttpException(
+            status_code=404,
+            exception_id="pageNotFound",
+            description=f"No registered path found for url '{url}' and method '{method}'",
+            data={"url": url, "method": method},
+        )
 
     def _build_loaded_endpoint_function(self, request: httpx.Request) -> partial:
         """Match a request to the correct endpoint, build typed parameter dictionary,
