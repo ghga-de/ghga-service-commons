@@ -23,6 +23,8 @@ import httpx
 import pytest
 from pydantic import BaseModel
 
+from ghga_service_commons.httpyexpect.server.exceptions import HttpException
+
 
 @pytest.fixture
 def assert_all_responses_were_requested() -> bool:
@@ -175,7 +177,22 @@ class EndpointsHandler:
                 ) from err
 
             if parameter_type is not str:
-                value = parameter_type(value)
+                try:
+                    value = parameter_type(value)
+                except ValueError as err:
+                    raise HttpException(
+                        status_code=422,
+                        exception_id="malformedUrl",
+                        description=(
+                            f"Unable to cast '{value}' to {parameter_type} for "
+                            + f"path '{request.url.path}'"
+                        ),
+                        data={
+                            "value": value,
+                            "parameter_type": parameter_type,
+                            "path": request.url.path,
+                        },
+                    ) from err
             typed_parameters[parameter_name] = value
 
         # include request itself if needed (e.g. for header or auth info),
