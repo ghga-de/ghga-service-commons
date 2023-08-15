@@ -24,6 +24,12 @@ from ghga_service_commons.httpyexpect.server.exceptions import HttpException
 app = EndpointsHandler()
 
 
+@app.get("/hello")
+def basic() -> httpx.Response:
+    """Basic endpoint"""
+    return httpx.Response(status_code=200, json={"hello": "world"})
+
+
 @app.get(url="/items/{item_name}")
 def endpoint(item_name: str) -> httpx.Response:
     """Endpoint with only one path variable"""
