@@ -55,25 +55,21 @@ class EndpointsHandler:
     The one exception is "request", which will be passed in automatically if specified.
     """
 
-    class NoMatchingUrl(RuntimeError):
-        """Raised upon exhausting list of urls under matching method without match"""
-
-        def __init__(self, url: str, method: str) -> None:
-            message = (
-                f"No mock endpoint registered for url '{url}' and method '{method}'"
-            )
-            super().__init__(message)
-
-    def __init__(self, exception_handler: Optional[Callable] = None):
+    def __init__(
+        self,
+        exception_handler: Optional[
+            Callable[[httpx.Request, HttpException], Any]
+        ] = None,
+    ):
         """Initialize the handler.
 
         Args:
             exception_handler - custom exception handler function
         """
 
-        self.exception_handler: Optional[Callable] = (
-            exception_handler if exception_handler else None
-        )
+        self.exception_handler: Optional[
+            Callable[[httpx.Request, HttpException], Any]
+        ] = (exception_handler if exception_handler else None)
 
         self._methods: dict[str, list[MatchableEndpoint]] = {
             "GET": [],
@@ -252,7 +248,7 @@ class EndpointsHandler:
         try:
             endpoint_function = self._build_loaded_endpoint_function(request)
             return endpoint_function()
-        except BaseException as exc:
+        except HttpException as exc:
             if self.exception_handler is not None:
-                return self.exception_handler(exc)
+                return self.exception_handler(request, exc)
             raise
