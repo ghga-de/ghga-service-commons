@@ -87,7 +87,7 @@ class EndpointsHandler:
     def _compile_regex_url(url_pattern: str) -> str:
         """Given a url pattern, compile a regex that matches named groups where specified.
 
-        e.g. "/work-packages/{package_id}" would become "/work-packages/(?P<package_id>[^/]+)"
+        e.g. "/work-packages/{package_id}" would become "/work-packages/(?P<package_id>[^/]+)$"
         And when a request URL like /work-packages/12 is matched against the regex-url above,
         the match object will have a .groupdict() of {"package_id": "12"}
         """
@@ -100,7 +100,7 @@ class EndpointsHandler:
             repl=lambda name: f"(?P<{name.group().strip(strip)}>[^/]+)",
             string=url_pattern,
         )
-        return url
+        return f"{url}$"
 
     def _add_endpoint(self, method: str, url: str, endpoint_function: Callable) -> None:
         """Process the url and store the resulting endpoint according to method type"""
@@ -111,9 +111,6 @@ class EndpointsHandler:
         )
 
         self._methods[method].append(matchable_endpoint)
-        self._methods[method].sort(
-            key=lambda endpoint: len(endpoint.url_pattern), reverse=True
-        )
 
     def _base_endpoint_wrapper(
         self, url: str, method: str, endpoint_function: Callable
