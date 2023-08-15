@@ -21,9 +21,11 @@ import httpx
 from ghga_service_commons.api.endpoints_handler import EndpointsHandler
 from ghga_service_commons.httpyexpect.server.exceptions import HttpException
 
+# Create an instance of the EndpointsHandler with no exception handler
 app = EndpointsHandler()
 
 
+# basic way to register an endpoint
 @app.get("/hello")
 def basic() -> httpx.Response:
     """Basic endpoint"""
@@ -31,14 +33,14 @@ def basic() -> httpx.Response:
 
 
 @app.get(url="/items/{item_name}")
-def endpoint(item_name: str) -> httpx.Response:
+def get_item(item_name: str) -> httpx.Response:
     """Endpoint with only one path variable"""
     response = httpx.Response(status_code=200, json={"expected": item_name})
     return response
 
 
 @app.get(url="/items/{item_name}/sizes/{item_size}")
-def get_endpoint_2(item_name: str, item_size: int) -> httpx.Response:
+def get_item_and_size(item_name: str, item_size: int) -> httpx.Response:
     """Endpoint with multiple path variables.
 
     Defined after simpler one with same start to make sure pattern matching works. If
@@ -55,7 +57,7 @@ def get_endpoint_2(item_name: str, item_size: int) -> httpx.Response:
 
 
 @app.post(url="/items")
-def posting_endpoint(request: httpx.Request) -> httpx.Response:
+def add_item(request: httpx.Request) -> httpx.Response:
     """Mock endpoint to test getting data from the request body.
 
     Expects "detail" in body.
