@@ -39,9 +39,17 @@ def endpoint(item_name: str) -> httpx.Response:
 
 @app.get(url="/items/{item_name}/sizes/{item_size}")
 def get_endpoint_2(item_name: str, item_size: int) -> httpx.Response:
-    """Endpoint with multiple path variables, defined after simpler one with same start"""
+    """Endpoint with multiple path variables.
+
+    Defined after simpler one with same start to make sure pattern matching works. If
+    it did not work, the pattern for the shorter function (/items/item_name) could match
+    on the first part of this endpoint's path.
+
+    Also gives a chance to test type-hint interpretation/casting.
+    """
     response = httpx.Response(
-        status_code=200, json={"expected": (item_name, item_size)}
+        status_code=200,
+        json={"expected": [item_name, item_size]},
     )
     return response
 
