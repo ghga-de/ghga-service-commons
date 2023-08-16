@@ -89,19 +89,21 @@ class EndpointsHandler:
 
     def __init__(
         self,
-        exception_handler: Optional[
+        http_exception_handler: Optional[
             Callable[[httpx.Request, HttpException], Any]
         ] = None,
     ):
-        """Initialize the handler.
+        """Initialize the EndpointsHandler with an optional HttpException handler.
 
         Args:
-            exception_handler - custom exception handler function
+            http_exception_handler:
+                custom exception handler function that takes the request and exception
+                as arguments, in that order.
         """
 
-        self.exception_handler: Optional[
+        self.http_exception_handler: Optional[
             Callable[[httpx.Request, HttpException], Any]
-        ] = (exception_handler if exception_handler else None)
+        ] = (http_exception_handler if http_exception_handler else None)
 
         self._methods: dict[str, list[MatchableEndpoint]] = {
             "GET": [],
@@ -269,6 +271,6 @@ class EndpointsHandler:
             endpoint_function = self._build_loaded_endpoint_function(request)
             return endpoint_function()
         except HttpException as exc:
-            if self.exception_handler is not None:
-                return self.exception_handler(request, exc)
+            if self.http_exception_handler is not None:
+                return self.http_exception_handler(request, exc)
             raise
