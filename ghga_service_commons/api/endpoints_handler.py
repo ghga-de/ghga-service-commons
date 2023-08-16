@@ -70,6 +70,7 @@ class MatchableEndpoint(BaseModel):
 
     url_pattern: str
     endpoint_function: Callable
+    signature_parameters: dict[str, Any]
 
 
 class EndpointsHandler:
@@ -120,11 +121,14 @@ class EndpointsHandler:
 
         Process the `path` and store the resulting endpoint according to `method`.
         """
+        signature_parameters: dict[str, Any] = _get_signature_info(endpoint_function)
+
         url_pattern = _compile_regex_url(path)
 
         matchable_endpoint = MatchableEndpoint(
             url_pattern=url_pattern,
             endpoint_function=endpoint_function,
+            signature_parameters=signature_parameters,
         )
 
         self._methods[method].append(matchable_endpoint)
