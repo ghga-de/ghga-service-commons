@@ -32,14 +32,13 @@ def basic() -> httpx.Response:
     return httpx.Response(status_code=200, json={"hello": "world"})
 
 
-@app.get(url="/items/{item_name}")
+@app.get("/items/{item_name}")
 def get_item(item_name: str) -> httpx.Response:
     """Endpoint with only one path variable"""
-    response = httpx.Response(status_code=200, json={"expected": item_name})
-    return response
+    return httpx.Response(status_code=200, json={"expected": item_name})
 
 
-@app.get(url="/items/{item_name}/sizes/{item_size}")
+@app.get("/items/{item_name}/sizes/{item_size}")
 def get_item_and_size(item_name: str, item_size: int) -> httpx.Response:
     """Endpoint with multiple path variables.
 
@@ -49,20 +48,16 @@ def get_item_and_size(item_name: str, item_size: int) -> httpx.Response:
 
     Also gives a chance to test type-hint interpretation/casting.
     """
-    response = httpx.Response(
-        status_code=200,
-        json={"expected": [item_name, item_size]},
-    )
-    return response
+    return httpx.Response(status_code=200, json={"expected": [item_name, item_size]})
 
 
-@app.post(url="/items")
+@app.post("/items")
 def add_item(request: httpx.Request) -> httpx.Response:
     """Mock endpoint to test getting data from the request body.
 
     Expects "detail" in body.
     """
-    body = json.loads(request.content)
+    body: dict[str, dict] = json.loads(request.content)
 
     if "detail" not in body:
         raise HttpException(
@@ -72,5 +67,4 @@ def add_item(request: httpx.Request) -> httpx.Response:
             data={},
         )
 
-    response = httpx.Response(status_code=201, json={"expected": body["detail"]})
-    return response
+    return httpx.Response(status_code=201, json={"expected": body["detail"]})
