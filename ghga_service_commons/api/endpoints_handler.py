@@ -28,6 +28,8 @@ from ghga_service_commons.httpyexpect.server.exceptions import HttpException
 
 __all__ = ["EndpointsHandler", "assert_all_responses_were_requested"]
 
+BRACKET_PATTERN = re.compile(r"{.*?}")
+
 
 def _compile_regex_url(path: str) -> str:
     """Given a path, compile a url pattern regex that matches named groups where specified.
@@ -40,10 +42,9 @@ def _compile_regex_url(path: str) -> str:
     """
 
     brackets_to_strip = "{}"
-    parameter_pattern = re.compile(r"{.*?}")  # match fewest possible chars inside
 
     url = re.sub(
-        parameter_pattern,
+        BRACKET_PATTERN,
         repl=lambda name: f"(?P<{name.group().strip(brackets_to_strip)}>[^/]+)",
         string=path,
     )
@@ -72,7 +73,7 @@ def assert_all_responses_were_requested() -> bool:
     return False
 
 
-class MatchableEndpoint(BaseModel):
+class RegisteredEndpoint(BaseModel):
     """Endpoint data with the url turned into regex string to get parameters in path"""
 
     url_pattern: str
@@ -113,7 +114,7 @@ class EndpointsHandler:
             Callable[[httpx.Request, HttpException], Any]
         ] = (http_exception_handler if http_exception_handler else None)
 
-        self._methods: dict[str, list[MatchableEndpoint]] = {
+        self._methods: dict[str, list[RegisteredEndpoint]] = {
             "GET": [],
             "DELETE": [],
             "POST": [],
@@ -166,13 +167,8 @@ class EndpointsHandler:
             param for param in signature_parameters if param != "request"
         }
         if endpoint_parameters:
-            # match fewest possible chars inside
-            parameter_pattern = re.compile(r"{.*?}")
-
             # get set of parameters from path with brackets stripped
-            matches = {
-                param.strip("{}") for param in re.findall(parameter_pattern, path)
-            }
+            matches = {param.strip("{}") for param in re.findall(BRACKET_PATTERN, path)}
 
             if matches != endpoint_parameters:
                 raise TypeError(
@@ -191,13 +187,13 @@ class EndpointsHandler:
 
         url_pattern = _compile_regex_url(path)
 
-        matchable_endpoint = MatchableEndpoint(
+        registered_endpoint = RegisteredEndpoint(
             url_pattern=url_pattern,
             endpoint_function=endpoint_function,
             signature_parameters=signature_parameters,
         )
 
-        self._methods[method].append(matchable_endpoint)
+        self._methods[method].append(registered_endpoint)
 
     def _validate_endpoint(self, path: str, endpoint_function: Callable):
         """Perform validation on the endpoint before adding it
@@ -212,7 +208,10 @@ class EndpointsHandler:
     def _base_endpoint_wrapper(
         self, path: str, method: str, endpoint_function: Callable
     ) -> Callable:
-        """Used by endpoint decorators to validate and register the target function"""
+        """Logic common to endpoint decorators to validate/register the target function.
+
+        This is just moved out to avoid typing it in each of `get`, `delete`, `post`, etc.
+        """
         self._validate_endpoint(path, endpoint_function)
         self._add_endpoint(
             method=method, path=path, endpoint_function=endpoint_function
@@ -304,7 +303,7 @@ class EndpointsHandler:
         return typed_parameters
 
     def _parse_url_parameters(
-        self, url: str, endpoint: MatchableEndpoint
+        self, url: str, endpoint: RegisteredEndpoint
     ) -> dict[str, str]:
         """Produce a dict of path var names (keys) and request url values (values).
 
@@ -313,10 +312,10 @@ class EndpointsHandler:
         """
 
         matched_url = re.search(endpoint.url_pattern, url)
-        matched_url = cast(re.Match, matched_url)  # make type checker happy
+        matched_url = cast(re.Match, matched_url)  # never None, make type checker happy
         return matched_url.groupdict()
 
-    def _get_registered_endpoint(self, url: str, method: str) -> MatchableEndpoint:
+    def _get_registered_endpoint(self, url: str, method: str) -> RegisteredEndpoint:
         """Match request URL to a registered endpoint's url pattern.
 
         Iterate through the registered endpoints for the given method.
@@ -366,7 +365,7 @@ class EndpointsHandler:
             request=request,
         )
 
-        # return function with the typed parameters
+        # return function with the typed parameters loaded up
         return partial(endpoint.endpoint_function, **typed_parameters)
 
     def handle_request(self, request: httpx.Request):

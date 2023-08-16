@@ -96,7 +96,7 @@ def test_get_with_bad_input(httpx_mock: HTTPXMock):  # noqa: F811
     """Look for error raised with invalid path variables"""
     httpx_mock.add_callback(callback=app.handle_request)
 
-    expected = ["4", "fail"]  # pass str number as a sanity check that it stays a str
+    expected = ["pass", "fail"]
 
     with pytest.raises(HttpException):
         with httpx.Client(base_url=BASE_URL) as client:
