@@ -18,7 +18,7 @@
 import re
 from functools import partial
 from inspect import signature
-from typing import Any, Callable, Optional, get_type_hints
+from typing import Any, Callable, Optional, cast, get_type_hints
 
 import httpx
 import pytest
@@ -292,24 +292,39 @@ class EndpointsHandler:
 
         return typed_parameters
 
-    def _get_function_and_parameters(
-        self, url: str, method: str
-    ) -> tuple[Callable, dict[str, str]]:
-        """Iterate through the registered endpoints for the given method.
+    def _parse_url_parameters(
+        self, url: str, endpoint: MatchableEndpoint
+    ) -> dict[str, str]:
+        """Produce a dict of path var names (keys) and request url values (values).
 
-        For each registered endpoint, try to match the request's url to the endpoint pattern.
-        Upon matching, return the function and parsed variables from the url (if applicable).
+        This should always match because we will have already performed the match in
+        _get_registered_endpoint.
+        """
+
+        matched_url = re.search(endpoint.url_pattern, url)
+        matched_url = cast(re.Match, matched_url)  # make type checker happy
+        return matched_url.groupdict()
+
+    def _get_registered_endpoint(self, url: str, method: str) -> MatchableEndpoint:
+        """Match request URL to a registered endpoint's url pattern.
+
+        Iterate through the registered endpoints for the given method.
+        For each registered endpoint, try to match the request's url to the endpoint
+        pattern. Upon matching, return the endpoint object.
+
+        Args:
+            url: The url of the request.
+            method: The method of the request.
+
+        Raises:
+            HttpException:
+                (with status 404) when unable to find a registered endpoint with a
+                matching URL.
         """
         for endpoint in self._methods[method]:
             matched_url = re.search(endpoint.url_pattern, url)
             if matched_url:
-                endpoint_function = endpoint.endpoint_function
-
-                # return endpoint function with url-string parameters
-                return (
-                    endpoint_function,
-                    matched_url.groupdict(),
-                )
+                return endpoint
 
         raise HttpException(
             status_code=404,
@@ -323,12 +338,17 @@ class EndpointsHandler:
         and return loaded partial function.
         """
 
-        # get endpoint function and the parsed string parameters from the url
-        endpoint_function, string_parameters = self._get_function_and_parameters(
+        # get endpoint object that corresponds to the request URL
+        endpoint = self._get_registered_endpoint(
             url=str(request.url), method=request.method
         )
 
-        # convert string parameters into the types specified in function signature
+        # get the parsed string parameters from the url
+        parsed_url_parameters = self._parse_url_parameters(
+            url=str(request.url), endpoint=endpoint
+        )
+        endpoint_function = endpoint.endpoint_function
+        string_parameters = parsed_url_parameters
         typed_parameters = self._convert_parameter_types(
             endpoint_function=endpoint_function,
             string_parameters=string_parameters,
@@ -336,7 +356,7 @@ class EndpointsHandler:
         )
 
         # return function with the typed parameters
-        return partial(endpoint_function, **typed_parameters)
+        return partial(endpoint.endpoint_function, **typed_parameters)
 
     def handle_request(self, request: httpx.Request):
         """Route intercepted request to the registered endpoint and return response
