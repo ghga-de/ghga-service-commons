@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-"""Tests to verify the functionality of the EndpointsHandler class"""
+"""Tests for the EndpointsHandler class"""
 
 import httpx
 import pytest
@@ -130,6 +130,7 @@ def test_post_failure(httpx_mock: HTTPXMock):  # noqa: F811
     """
     httpx_mock.add_callback(callback=app.handle_request)
 
+    # cause a failure by omitting the "detail" key that the endpoint looks for
     with pytest.raises(HttpException):
         with httpx.Client(base_url=BASE_URL) as client:
             client.post("/items", json={})
@@ -143,6 +144,7 @@ def test_post_failure_with_handler(httpx_mock: HTTPXMock):  # noqa: F811
     app.http_exception_handler = http_exception_handler
     httpx_mock.add_callback(callback=app.handle_request)
 
+    # cause a failure by omitting the "detail" key that the endpoint looks for
     with httpx.Client(base_url=BASE_URL) as client:
         client.post("/items", json={})
 
