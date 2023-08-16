@@ -26,6 +26,38 @@ from pydantic import BaseModel
 from ghga_service_commons.httpyexpect.server.exceptions import HttpException
 
 
+def _compile_regex_url(path: str) -> str:
+    """Given a path, compile a url pattern regex that matches named groups where specified.
+
+    e.g. "/work-packages/{package_id}" would become "/work-packages/(?P<package_id>[^/]+)$"
+    And when a request URL like /work-packages/12 is matched against the regex-url above,
+    the match object will have a .groupdict() of {"package_id": "12"}
+
+    This function is not intended to be used outside the module.
+    """
+
+    brackets_to_strip = "{}"
+    parameter_pattern = re.compile(r"{.*?}")  # match fewest possible chars inside
+
+    url = re.sub(
+        parameter_pattern,
+        repl=lambda name: f"(?P<{name.group().strip(brackets_to_strip)}>[^/]+)",
+        string=path,
+    )
+    return f"{url}$"
+
+
+def _get_signature_info(endpoint_function: Callable) -> dict[str, Any]:
+    """Retrieves the typed parameter info from function signature minus return type.
+
+    This function is not intended to be used outside the module.
+    """
+    signature_parameters: dict[str, Any] = get_type_hints(endpoint_function)
+    if "return" in signature_parameters:
+        signature_parameters.pop("return")
+    return signature_parameters
+
+
 @pytest.fixture
 def assert_all_responses_were_requested() -> bool:
     """Whether httpx checks that all registered responses are sent back."""
@@ -79,28 +111,15 @@ class EndpointsHandler:
             "PUT": [],
         }
 
-    @staticmethod
-    def _compile_regex_url(url_pattern: str) -> str:
-        """Given a url pattern, compile a regex that matches named groups where specified.
+    def _add_endpoint(
+        self, method: str, path: str, endpoint_function: Callable
+    ) -> None:
+        """Register an endpoint.
 
-        e.g. "/work-packages/{package_id}" would become "/work-packages/(?P<package_id>[^/]+)$"
-        And when a request URL like /work-packages/12 is matched against the regex-url above,
-        the match object will have a .groupdict() of {"package_id": "12"}
+        Process the `path` and store the resulting endpoint according to `method`.
         """
+        url_pattern = _compile_regex_url(path)
 
-        strip = "{}"
-        parameter_pattern = re.compile(r"{.*?}")  # match fewest possible chars inside
-
-        url = re.sub(
-            parameter_pattern,
-            repl=lambda name: f"(?P<{name.group().strip(strip)}>[^/]+)",
-            string=url_pattern,
-        )
-        return f"{url}$"
-
-    def _add_endpoint(self, method: str, url: str, endpoint_function: Callable) -> None:
-        """Process the url and store the resulting endpoint according to method type"""
-        url_pattern = self._compile_regex_url(url)
         matchable_endpoint = MatchableEndpoint(
             url_pattern=url_pattern,
             endpoint_function=endpoint_function,
@@ -109,36 +128,37 @@ class EndpointsHandler:
         self._methods[method].append(matchable_endpoint)
 
     def _base_endpoint_wrapper(
-        self, url: str, method: str, endpoint_function: Callable
+        self, path: str, method: str, endpoint_function: Callable
     ) -> Callable:
-        """Used by endpoint decorators to wrap and register the target function"""
-        self._add_endpoint(method=method, url=url, endpoint_function=endpoint_function)
+        self._add_endpoint(
+            method=method, path=path, endpoint_function=endpoint_function
+        )
         return endpoint_function
 
-    def get(self, url: str) -> Callable:
-        """Decorator function to add endpoint to Handler"""
+    def get(self, path: str) -> Callable:
+        """Decorator function to add endpoint to Handler with `GET` method"""
 
-        return partial(self._base_endpoint_wrapper, url, "GET")
+        return partial(self._base_endpoint_wrapper, path, "GET")
 
-    def delete(self, url: str) -> Callable:
-        """Decorator function to add endpoint to Handler"""
+    def delete(self, path: str) -> Callable:
+        """Decorator function to add endpoint to Handler with `DELETE` method"""
 
-        return partial(self._base_endpoint_wrapper, url, "DELETE")
+        return partial(self._base_endpoint_wrapper, path, "DELETE")
 
-    def post(self, url: str) -> Callable:
-        """Decorator function to add endpoint to Handler"""
+    def post(self, path: str) -> Callable:
+        """Decorator function to add endpoint to Handler with `POST` method"""
 
-        return partial(self._base_endpoint_wrapper, url, "POST")
+        return partial(self._base_endpoint_wrapper, path, "POST")
 
-    def patch(self, url: str) -> Callable:
-        """Decorator function to add endpoint to Handler"""
+    def patch(self, path: str) -> Callable:
+        """Decorator function to add endpoint to Handler with `PATCH` method"""
 
-        return partial(self._base_endpoint_wrapper, url, "PATCH")
+        return partial(self._base_endpoint_wrapper, path, "PATCH")
 
-    def put(self, url: str) -> Callable:
-        """Decorator function to add endpoint to Handler"""
+    def put(self, path: str) -> Callable:
+        """Decorator function to add endpoint to Handler with `PUT` method"""
 
-        return partial(self._base_endpoint_wrapper, url, "PUT")
+        return partial(self._base_endpoint_wrapper, path, "PUT")
 
     @staticmethod
     def _convert_parameter_types(
