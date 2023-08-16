@@ -240,32 +240,37 @@ class EndpointsHandler:
 
     @staticmethod
     def _convert_parameter_types(
-        endpoint_function: Callable,
-        string_parameters: dict[str, str],
+        parsed_url_parameters: dict[str, str],
+        signature_parameters: dict[str, Any],
         request: httpx.Request,
     ) -> dict[str, Any]:
         """Get type info for function parameters.
 
-        Since the values parsed from the URL
-        are still in string format, cast them to the types specified in the signature.
+        Since the values parsed from the URL are still in string format, cast them to
+        the types specified in the signature.
         If the request is needed, include that in the returned parameters.
-        """
 
-        # Get the parameter information from the endpoint function signature
-        signature_parameters = get_type_hints(endpoint_function)
+        Args:
+            parsed_url_parameters:
+                A dict containing the path variable names (keys) as specified in the
+                function decorator, and the values supplied for those variables in the
+                request still in string format (values).
+            signature_parameters:
+                A dict containing type information for the endpoint function's parameters.
+            request:
+                The request object.
+
+        Raises:
+            HttpException:
+                (with status 422) when a string value in the request URL cannot
+                be converted/cast to the type specified by the type-hint for the
+                corresponding parameter.
+        """
 
         # type-cast based on type-hinting info
         typed_parameters: dict[str, Any] = {}
-        for parameter_name, value in string_parameters.items():
-            try:
-                parameter_type = signature_parameters[parameter_name]
-
-            # all parameters should be typed, raise exception otherwise
-            except KeyError as err:
-                raise TypeError(
-                    f"Parameter '{parameter_name}' in function "
-                    + f"'{endpoint_function.__name__}' is missing type information!"
-                ) from err
+        for parameter_name, value in parsed_url_parameters.items():
+            parameter_type = signature_parameters[parameter_name]
 
             if parameter_type is not str:
                 try:
@@ -347,11 +352,11 @@ class EndpointsHandler:
         parsed_url_parameters = self._parse_url_parameters(
             url=str(request.url), endpoint=endpoint
         )
-        endpoint_function = endpoint.endpoint_function
-        string_parameters = parsed_url_parameters
+
+        # convert parsed string parameters into the types specified in function signature
         typed_parameters = self._convert_parameter_types(
-            endpoint_function=endpoint_function,
-            string_parameters=string_parameters,
+            parsed_url_parameters=parsed_url_parameters,
+            signature_parameters=endpoint.signature_parameters,
             request=request,
         )
 
