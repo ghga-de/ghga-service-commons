@@ -26,6 +26,8 @@ from pydantic import BaseModel
 
 from ghga_service_commons.httpyexpect.server.exceptions import HttpException
 
+__all__ = ["EndpointsHandler", "assert_all_responses_were_requested"]
+
 
 def _compile_regex_url(path: str) -> str:
     """Given a path, compile a url pattern regex that matches named groups where specified.
@@ -61,8 +63,12 @@ def _get_signature_info(endpoint_function: Callable) -> dict[str, Any]:
 
 @pytest.fixture
 def assert_all_responses_were_requested() -> bool:
-    """Whether httpx checks that all registered responses are sent back."""
-    # Not all responses must be requested here.
+    """Whether httpx checks that all registered responses are sent back.
+
+    This is set to false because the registered endpoints are considered mocked even if
+    they aren't used in a given test. If this is True (default), pytest_httpx will raise
+    an error if a given test doesn't hit every mocked endpoint.
+    """
     return False
 
 
@@ -84,7 +90,7 @@ class EndpointsHandler:
     with named groups. That in turn enables linking the named path variables to the
     variables in the endpoint function itself.
 
-    Note that the only parameter types allowed in the endpoint functions are primitives
+    The only parameter types allowed in the endpoint functions are primitives
     that can be stored in the url string: int, float, str, bool, None, and complex.
     The one exception is "request", which will be passed in automatically if specified.
     """
@@ -367,7 +373,11 @@ class EndpointsHandler:
         """Route intercepted request to the registered endpoint and return response
 
         If using this with httpx_mock, then this function should be the callback.
-        e.g.: httpx_mock.add_callback(callback=endpoints_handler.handle_request)"""
+        e.g.:
+        ```
+        httpx_mock.add_callback(callback=endpoints_handler.handle_request)
+        ```
+        """
         try:
             endpoint_function = self._build_loaded_endpoint_function(request)
             return endpoint_function()
