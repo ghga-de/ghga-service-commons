@@ -17,6 +17,7 @@
 
 import re
 from functools import partial
+from inspect import signature
 from typing import Any, Callable, Optional, get_type_hints
 
 import httpx
@@ -114,6 +115,33 @@ class EndpointsHandler:
             "PUT": [],
         }
 
+    @staticmethod
+    def _ensure_all_parameters_are_typed(
+        endpoint_function: Callable, signature_parameters: dict[str, Any]
+    ):
+        """Verify that all the endpoint function parameters are typed.
+
+        This will not apply to the request parameter because we don't perform any
+        type conversion on that.
+
+        Args:
+            endpoint_function: the function associated with the endpoint.
+            signature_parameters:
+                A dict containing type information for the endpoint function's parameters.
+
+        Raises:
+            TypeError: When one or more parameters are missing type-hint information.
+        """
+
+        all_parameters = signature(endpoint_function).parameters
+
+        for parameter in all_parameters:
+            if parameter not in signature_parameters:
+                raise TypeError(
+                    f"Parameter '{parameter}' in '{endpoint_function.__name__}' is "
+                    + "missing a type hint"
+                )
+
     def _add_endpoint(
         self, method: str, path: str, endpoint_function: Callable
     ) -> None:
@@ -133,9 +161,19 @@ class EndpointsHandler:
 
         self._methods[method].append(matchable_endpoint)
 
+    def _validate_endpoint(self, endpoint_function: Callable):
+        """Perform validation on the endpoint before adding it
+
+        Verify that all the `endpoint_function` parameters are typed.
+        """
+        signature_parameters: dict[str, Any] = _get_signature_info(endpoint_function)
+        self._ensure_all_parameters_are_typed(endpoint_function, signature_parameters)
+
     def _base_endpoint_wrapper(
         self, path: str, method: str, endpoint_function: Callable
     ) -> Callable:
+        """Used by endpoint decorators to validate and register the target function"""
+        self._validate_endpoint(endpoint_function)
         self._add_endpoint(
             method=method, path=path, endpoint_function=endpoint_function
         )
