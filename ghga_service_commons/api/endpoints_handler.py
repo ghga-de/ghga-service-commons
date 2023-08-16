@@ -142,6 +142,38 @@ class EndpointsHandler:
                     + "missing a type hint"
                 )
 
+    @staticmethod
+    def _ensure_decorator_matches_endpoint(
+        path: str, signature_parameters: dict[str, Any]
+    ):
+        """Verify consistency between path in path decorator and the decorated function
+
+        Args:
+            path: the path specified by the EndpointsHandler decorator.
+            signature_parameters:
+                A dict containing type information for the endpoint function's parameters.
+
+        Raises:
+            TypeError: When there is a mismatch between the path and the function parameters.
+        """
+        endpoint_parameters = {
+            param for param in signature_parameters if param != "request"
+        }
+        if endpoint_parameters:
+            # match fewest possible chars inside
+            parameter_pattern = re.compile(r"{.*?}")
+
+            # get set of parameters from path with brackets stripped
+            matches = {
+                param.strip("{}") for param in re.findall(parameter_pattern, path)
+            }
+
+            if matches != endpoint_parameters:
+                raise TypeError(
+                    f"Path variables for path '{path}' do not match the "
+                    + "function it decorates"
+                )
+
     def _add_endpoint(
         self, method: str, path: str, endpoint_function: Callable
     ) -> None:
@@ -161,19 +193,21 @@ class EndpointsHandler:
 
         self._methods[method].append(matchable_endpoint)
 
-    def _validate_endpoint(self, endpoint_function: Callable):
+    def _validate_endpoint(self, path: str, endpoint_function: Callable):
         """Perform validation on the endpoint before adding it
 
         Verify that all the `endpoint_function` parameters are typed.
+        Verify that the `path` parameter names match the `endpoint_function` signature.
         """
         signature_parameters: dict[str, Any] = _get_signature_info(endpoint_function)
         self._ensure_all_parameters_are_typed(endpoint_function, signature_parameters)
+        self._ensure_decorator_matches_endpoint(path, signature_parameters)
 
     def _base_endpoint_wrapper(
         self, path: str, method: str, endpoint_function: Callable
     ) -> Callable:
         """Used by endpoint decorators to validate and register the target function"""
-        self._validate_endpoint(endpoint_function)
+        self._validate_endpoint(path, endpoint_function)
         self._add_endpoint(
             method=method, path=path, endpoint_function=endpoint_function
         )
