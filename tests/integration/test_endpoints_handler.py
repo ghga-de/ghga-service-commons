@@ -140,23 +140,42 @@ def test_post_failure_with_handler(httpx_mock: HTTPXMock):  # noqa: F811
 
     Makes sure that exceptions are handled with the specified handler.
     """
-    app.exception_handler = http_exception_handler
+    app.http_exception_handler = http_exception_handler
     httpx_mock.add_callback(callback=app.handle_request)
 
     with httpx.Client(base_url=BASE_URL) as client:
         client.post("/items", json={})
 
 
-def test_endpoint_missing_typehint(httpx_mock: HTTPXMock):  # noqa: F811
-    """Make sure that we get an error when a registered endpoint lacks type hints"""
+def test_path_and_function_mismatch():
+    """Make sure that we get an error if path variable names and decorated endpoint
+    function parameter names are not identical.
+    """
+
+    # create a new EndpointsHandler so we don't modify 'app'
     throwaway = EndpointsHandler()
 
-    @throwaway.get("/dummy/{parameter1}")
-    def dummy(parameter1):
-        pass
+    with pytest.raises(
+        TypeError,
+        match="Path variables for path '/dummy/{pram1}' do not match the function it decorates",
+    ):
 
-    httpx_mock.add_callback(callback=throwaway.handle_request)
+        @throwaway.get("/dummy/{pram1}")
+        def dummy(parameter1: int) -> None:
+            """Dummy function with missing type-hint info"""
 
-    with pytest.raises(TypeError):
-        with httpx.Client(base_url=BASE_URL) as client:
-            client.get("/dummy/something")
+
+def test_endpoint_missing_typehint():
+    """Make sure that we get an error when a registered endpoint lacks type hints"""
+
+    # create a new EndpointsHandler so we don't modify 'app'
+    throwaway = EndpointsHandler()
+
+    with pytest.raises(
+        TypeError,
+        match="Parameter 'parameter1' in 'dummy' is missing a type hint",
+    ):
+
+        @throwaway.get("/dummy/{parameter1}")
+        def dummy(parameter1) -> None:
+            """Dummy function with missing type-hint info"""
