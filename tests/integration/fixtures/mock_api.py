@@ -13,16 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Simple set of endpoints designed to test the EndpointsHandler class"""
+"""Simple set of endpoints designed to test the MockRouter class"""
 import json
 
 import httpx
 
-from ghga_service_commons.api.endpoints_handler import EndpointsHandler
+from ghga_service_commons.api.mock_router import MockRouter
 from ghga_service_commons.httpyexpect.server.exceptions import HttpException
 
-# Create an instance of the EndpointsHandler with no exception handler
-app = EndpointsHandler()
+# Create an instance of the MockRouter with no exception handler
+app = MockRouter()
 
 
 # basic way to register an endpoint

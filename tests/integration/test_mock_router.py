@@ -14,14 +14,14 @@
 # limitations under the License.
 #
 
-"""Tests for the EndpointsHandler class"""
+"""Tests for the MockRouter class"""
 
 import httpx
 import pytest
 from pytest_httpx import HTTPXMock, httpx_mock  # noqa: F401
 
-from ghga_service_commons.api.endpoints_handler import (  # noqa: F401
-    EndpointsHandler,
+from ghga_service_commons.api.mock_router import (  # noqa: F401
+    MockRouter,
     assert_all_responses_were_requested,
 )
 from ghga_service_commons.httpyexpect.server.exceptions import HttpException
@@ -31,7 +31,7 @@ BASE_URL = "http://localhost"
 
 
 def http_exception_handler(request: httpx.Request, exc: HttpException):
-    """An exception handler that can be attached to the endpoints handler"""
+    """An exception handler that can be attached to the MockRouter"""
     assert isinstance(exc, HttpException)
     return httpx.Response(
         status_code=exc.status_code,
@@ -154,8 +154,8 @@ def test_path_and_function_mismatch():
     function parameter names are not identical.
     """
 
-    # create a new EndpointsHandler so we don't modify 'app'
-    throwaway = EndpointsHandler()
+    # create a new MockRouter so we don't modify 'app'
+    throwaway = MockRouter()
 
     with pytest.raises(
         TypeError,
@@ -170,8 +170,8 @@ def test_path_and_function_mismatch():
 def test_endpoint_missing_typehint():
     """Make sure that we get an error when a registered endpoint lacks type hints"""
 
-    # create a new EndpointsHandler so we don't modify 'app'
-    throwaway = EndpointsHandler()
+    # create a new MockRouter so we don't modify 'app'
+    throwaway = MockRouter()
 
     with pytest.raises(
         TypeError,

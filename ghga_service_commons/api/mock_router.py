@@ -26,7 +26,7 @@ from pydantic import BaseModel
 
 from ghga_service_commons.httpyexpect.server.exceptions import HttpException
 
-__all__ = ["EndpointsHandler", "assert_all_responses_were_requested"]
+__all__ = ["MockRouter", "assert_all_responses_were_requested"]
 
 BRACKET_PATTERN = re.compile(r"{.*?}")
 
@@ -81,7 +81,7 @@ class RegisteredEndpoint(BaseModel):
     signature_parameters: dict[str, Any]
 
 
-class EndpointsHandler:
+class MockRouter:
     """
     A class used to register mock endpoints with decorators similar to FastAPI.
 
@@ -102,7 +102,7 @@ class EndpointsHandler:
             Callable[[httpx.Request, HttpException], Any]
         ] = None,
     ):
-        """Initialize the EndpointsHandler with an optional HttpException handler.
+        """Initialize the MockRouter with an optional HttpException handler.
 
         Args:
             http_exception_handler:
@@ -156,7 +156,7 @@ class EndpointsHandler:
         """Verify consistency between path in path decorator and the decorated function
 
         Args:
-            path: the path specified by the EndpointsHandler decorator.
+            path: the path specified by the MockRouter decorator.
             signature_parameters:
                 A dict containing type information for the endpoint function's parameters.
 
@@ -374,7 +374,7 @@ class EndpointsHandler:
         If using this with httpx_mock, then this function should be the callback.
         e.g.:
         ```
-        httpx_mock.add_callback(callback=endpoints_handler.handle_request)
+        httpx_mock.add_callback(callback=mock_router.handle_request)
         ```
         """
         try:
