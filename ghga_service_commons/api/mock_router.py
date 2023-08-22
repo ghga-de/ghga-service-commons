@@ -150,7 +150,7 @@ class MockRouter:
                 )
 
     @staticmethod
-    def _ensure_decorator_matches_endpoint(
+    def _ensure_decorator_and_endpoint_parameters_match(
         path: str, signature_parameters: dict[str, Any]
     ):
         """Verify consistency between path in path decorator and the decorated function
@@ -203,7 +203,7 @@ class MockRouter:
         """
         signature_parameters: dict[str, Any] = _get_signature_info(endpoint_function)
         self._ensure_all_parameters_are_typed(endpoint_function, signature_parameters)
-        self._ensure_decorator_matches_endpoint(path, signature_parameters)
+        self._ensure_decorator_and_endpoint_parameters_match(path, signature_parameters)
 
     def _base_endpoint_wrapper(
         self, path: str, method: str, endpoint_function: Callable
@@ -347,16 +347,13 @@ class MockRouter:
         """Match a request to the correct endpoint, build typed parameter dictionary,
         and return loaded partial function.
         """
+        url = str(request.url)
 
         # get endpoint object that corresponds to the request URL
-        endpoint = self._get_registered_endpoint(
-            url=str(request.url), method=request.method
-        )
+        endpoint = self._get_registered_endpoint(url=url, method=request.method)
 
         # get the parsed string parameters from the url
-        parsed_url_parameters = self._parse_url_parameters(
-            url=str(request.url), endpoint=endpoint
-        )
+        parsed_url_parameters = self._parse_url_parameters(url=url, endpoint=endpoint)
 
         # convert parsed string parameters into the types specified in function signature
         typed_parameters = self._convert_parameter_types(
