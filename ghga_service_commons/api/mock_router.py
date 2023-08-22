@@ -112,7 +112,7 @@ class MockRouter:
 
         self.http_exception_handler: Optional[
             Callable[[httpx.Request, HttpException], Any]
-        ] = (http_exception_handler if http_exception_handler else None)
+        ] = http_exception_handler
 
         self._methods: dict[str, list[RegisteredEndpoint]] = {
             "GET": [],
