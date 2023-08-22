@@ -32,6 +32,19 @@ def basic() -> httpx.Response:
     return httpx.Response(status_code=200, json={"hello": "world"})
 
 
+@app.get("/items")
+def get_all_items(request: httpx.Request) -> httpx.Response:
+    """Endpoint meant to match path with the POST endpoint defined below"""
+    if request.method == "POST":
+        raise HttpException(
+            status_code=500,
+            exception_id="badRouting",
+            description="A POST request was routed to a GET endpoint",
+            data={},
+        )
+    return httpx.Response(status_code=200, json={"hello": "world"})
+
+
 @app.get("/items/{item_name}")
 def get_item(item_name: str) -> httpx.Response:
     """Endpoint with only one path variable"""
@@ -58,6 +71,15 @@ def add_item(request: httpx.Request) -> httpx.Response:
     Expects "detail" in body.
     """
     body: dict[str, dict] = json.loads(request.content)
+
+    if request.method == "GET":
+        # should not get here
+        raise HttpException(
+            status_code=500,
+            exception_id="badRouting",
+            description="A GET request was routed to a POST endpoint",
+            data={},
+        )
 
     if "detail" not in body:
         raise HttpException(
