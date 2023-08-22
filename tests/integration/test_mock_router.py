@@ -164,7 +164,7 @@ def test_path_and_function_mismatch():
 
         @throwaway.get("/dummy/{pram1}")
         def dummy(parameter1: int) -> None:
-            """Dummy function with missing type-hint info"""
+            """Dummy function with parameter mismatch"""
 
 
 def test_endpoint_missing_typehint():
