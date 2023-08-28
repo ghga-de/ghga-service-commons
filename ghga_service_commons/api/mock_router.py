@@ -106,7 +106,7 @@ class MockRouter(Generic[E]):
     def __init__(
         self,
         exception_handler: Optional[Callable[[httpx.Request, E], Any]] = None,
-        exceptions_to_catch: Optional[tuple[Type[Exception], ...]] = None,
+        exceptions_to_handle: Optional[tuple[Type[Exception], ...]] = None,
         handle_exc_subclasses: bool = False,
     ):
         """Initialize the MockRouter with an optional exception handler.
@@ -118,7 +118,7 @@ class MockRouter(Generic[E]):
                 the first argument and any subclass of Exception as the second argument.
                 This allows your exception handler signature to be more specifically typed.
 
-            `exceptions_to_catch`:
+            `exceptions_to_handle`:
                 tuple containing the exception types to pass to the exception_handler.
                 This parameter has no effect if `exception_handler` is None.
                 If None, all exceptions will be passed to the handler. If provided, only
@@ -131,7 +131,7 @@ class MockRouter(Generic[E]):
                 matches will be passed to the handler.
         """
         self.exception_handler = exception_handler
-        self.exceptions_to_catch = exceptions_to_catch
+        self.exceptions_to_handle = exceptions_to_handle
         self.handle_exc_subclasses = handle_exc_subclasses
 
         self._methods: dict[str, list[RegisteredEndpoint]] = {
@@ -387,11 +387,11 @@ class MockRouter(Generic[E]):
 
     def _should_pass_to_handler(self, exc: Exception):
         """Determine whether the provided exception should be passed to the handler"""
-        if not self.exceptions_to_catch:
+        if not self.exceptions_to_handle:
             return True
 
         pass_to_handler = False
-        for exc_type in self.exceptions_to_catch:
+        for exc_type in self.exceptions_to_handle:
             if isinstance(exc, exc_type):
                 if (
                     not self.handle_exc_subclasses
@@ -410,8 +410,8 @@ class MockRouter(Generic[E]):
         ```
         httpx_mock.add_callback(callback=mock_router.handle_request)
         ```
-        If self.exception_handler is specified, any errors matching self.exceptions_to_catch
-        will be passed to the handler. If self.exceptions_to_catch is None, then the
+        If self.exception_handler is specified, any errors matching self.exceptions_to_handle
+        will be passed to the handler. If self.exceptions_to_handle is None, then the
         handler will be given the exception regardless of type. In all other cases,
         the exception will be re-raised.
         """

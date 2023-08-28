@@ -198,7 +198,7 @@ def test_handler_errors_filtering(httpx_mock: HTTPXMock):  # noqa: F811
 
     throwaway: MockRouter = MockRouter(
         exception_handler=handler,
-        exceptions_to_catch=(ValueError,),
+        exceptions_to_handle=(ValueError,),
     )
 
     @throwaway.get("/gotohandler")
@@ -229,10 +229,10 @@ def test_handler_errors_filtering(httpx_mock: HTTPXMock):  # noqa: F811
 
 
 def test_exceptions_no_handler(httpx_mock: HTTPXMock):  # noqa: F811
-    """Errors specified in http_exceptions_to_catch should be raised normally if
+    """Errors specified in http_exceptions_to_handle should be raised normally if
     http_exception_handler is not defined"""
     throwaway: MockRouter = MockRouter(
-        exceptions_to_catch=(HttpException, HTTPException)
+        exceptions_to_handle=(HttpException, HTTPException)
     )
 
     @throwaway.get("/")
