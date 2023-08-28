@@ -18,15 +18,23 @@
 import re
 from functools import partial
 from inspect import signature
-from typing import Any, Callable, Optional, cast, get_type_hints
+from typing import Any, Callable, Generic, Optional, Type, TypeVar, cast, get_type_hints
 
 import httpx
 import pytest
+from fastapi import HTTPException
+from httpx import HTTPError
 from pydantic import BaseModel
 
 from ghga_service_commons.httpyexpect.server.exceptions import HttpException
 
-__all__ = ["MockRouter", "assert_all_responses_were_requested"]
+__all__ = [
+    "MockRouter",
+    "assert_all_responses_were_requested",
+    "HttpException",
+    "HTTPException",
+    "HTTPError",
+]
 
 BRACKET_PATTERN = re.compile(r"{.*?}")
 
@@ -81,7 +89,10 @@ class RegisteredEndpoint(BaseModel):
     signature_parameters: dict[str, Any]
 
 
-class MockRouter:
+E = TypeVar("E", bound=Exception)
+
+
+class MockRouter(Generic[E]):
     """
     A class used to register mock endpoints with decorators similar to FastAPI.
 
@@ -98,21 +109,34 @@ class MockRouter:
 
     def __init__(
         self,
-        http_exception_handler: Optional[
-            Callable[[httpx.Request, HttpException], Any]
-        ] = None,
+        exception_handler: Optional[Callable[[httpx.Request, E], Any]] = None,
+        exceptions_to_catch: Optional[tuple[Type[Exception], ...]] = None,
+        handle_exc_subclasses: bool = False,
     ):
-        """Initialize the MockRouter with an optional HttpException handler.
+        """Initialize the MockRouter with an optional exception handler.
 
         Args:
-            http_exception_handler:
+            `exception_handler`:
                 custom exception handler function that takes the request and exception
-                as arguments, in that order.
-        """
+                as arguments, in that order. It must take an httpx.Request object as
+                the first argument and any subclass of Exception as the second argument.
+                This allows your exception handler signature to be more specifically typed.
 
-        self.http_exception_handler: Optional[
-            Callable[[httpx.Request, HttpException], Any]
-        ] = http_exception_handler
+            `exceptions_to_catch`:
+                tuple containing the exception types to pass to the exception_handler.
+                This parameter has no effect if `exception_handler` is None.
+                If None, all exceptions will be passed to the handler. If provided, only
+                the exceptions specified will be passed to the handler. All other exception
+                types will be re-raised.
+
+            `handle_exc_subclasses`:
+                if True, will not only pass the specified exception types to the handler
+                also any exceptions that subclass those types. When False, only exact
+                matches will be passed to the handler.
+        """
+        self.exception_handler = exception_handler
+        self.exceptions_to_catch = exceptions_to_catch
+        self.handle_exc_subclasses = handle_exc_subclasses
 
         self._methods: dict[str, list[RegisteredEndpoint]] = {
             "GET": [],
@@ -365,6 +389,23 @@ class MockRouter:
         # return function with the typed parameters loaded up
         return partial(endpoint.endpoint_function, **typed_parameters)
 
+    def _should_pass_to_handler(self, exc: Exception):
+        """Determine whether the provided exception should be passed to the handler"""
+        if not self.exceptions_to_catch:
+            return True
+
+        pass_to_handler = False
+        for exc_type in self.exceptions_to_catch:
+            if isinstance(exc, exc_type):
+                if (
+                    not self.handle_exc_subclasses
+                    and type(exc) is exc_type  # pylint: disable=unidiomatic-typecheck
+                ):
+                    pass_to_handler = True
+                elif self.handle_exc_subclasses:
+                    pass_to_handler = True
+        return pass_to_handler
+
     def handle_request(self, request: httpx.Request):
         """Route intercepted request to the registered endpoint and return response
 
@@ -373,11 +414,17 @@ class MockRouter:
         ```
         httpx_mock.add_callback(callback=mock_router.handle_request)
         ```
+        If self.exception_handler is specified, any errors matching self.exceptions_to_catch
+        will be passed to the handler. If self.exceptions_to_catch is None, then the
+        handler will be given the exception regardless of type. In all other cases,
+        the exception will be re-raised.
         """
+
         try:
             endpoint_function = self._build_loaded_endpoint_function(request)
             return endpoint_function()
-        except HttpException as exc:
-            if self.http_exception_handler is not None:
-                return self.http_exception_handler(request, exc)
+        except Exception as exc:
+            if self.exception_handler and self._should_pass_to_handler(exc):
+                exc = cast(E, exc)  # satisfy type-checker by making exc type 'E'
+                return self.exception_handler(request, exc)
             raise
