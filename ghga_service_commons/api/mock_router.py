@@ -22,8 +22,6 @@ from typing import Any, Callable, Generic, Optional, Type, TypeVar, cast, get_ty
 
 import httpx
 import pytest
-from fastapi import HTTPException
-from httpx import HTTPError
 from pydantic import BaseModel
 
 from ghga_service_commons.httpyexpect.server.exceptions import HttpException
@@ -32,8 +30,6 @@ __all__ = [
     "MockRouter",
     "assert_all_responses_were_requested",
     "HttpException",
-    "HTTPException",
-    "HTTPError",
 ]
 
 BRACKET_PATTERN = re.compile(r"{.*?}")
