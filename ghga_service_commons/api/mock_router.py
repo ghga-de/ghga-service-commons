@@ -85,10 +85,10 @@ class RegisteredEndpoint(BaseModel):
     signature_parameters: dict[str, Any]
 
 
-E = TypeVar("E", bound=Exception)
+ExpectedExceptionTypes = TypeVar("ExpectedExceptionTypes", bound=Exception)
 
 
-class MockRouter(Generic[E]):
+class MockRouter(Generic[ExpectedExceptionTypes]):
     """
     A class used to register mock endpoints with decorators similar to FastAPI.
 
@@ -105,9 +105,11 @@ class MockRouter(Generic[E]):
 
     def __init__(
         self,
-        exception_handler: Optional[Callable[[httpx.Request, E], Any]] = None,
+        exception_handler: Optional[
+            Callable[[httpx.Request, ExpectedExceptionTypes], Any]
+        ] = None,
         exceptions_to_handle: Optional[tuple[Type[Exception], ...]] = None,
-        handle_exc_subclasses: bool = False,
+        handle_exception_subclasses: bool = False,
     ):
         """Initialize the MockRouter with an optional exception handler.
 
@@ -125,14 +127,14 @@ class MockRouter(Generic[E]):
                 the exceptions specified will be passed to the handler. All other exception
                 types will be re-raised.
 
-            `handle_exc_subclasses`:
+            `handle_exception_subclasses`:
                 if True, will not only pass the specified exception types to the handler
                 also any exceptions that subclass those types. When False, only exact
                 matches will be passed to the handler.
         """
         self.exception_handler = exception_handler
         self.exceptions_to_handle = exceptions_to_handle
-        self.handle_exc_subclasses = handle_exc_subclasses
+        self.handle_exception_subclasses = handle_exception_subclasses
 
         self._methods: dict[str, list[RegisteredEndpoint]] = {
             "GET": [],
@@ -394,11 +396,11 @@ class MockRouter(Generic[E]):
         for exc_type in self.exceptions_to_handle:
             if isinstance(exc, exc_type):
                 if (
-                    not self.handle_exc_subclasses
+                    not self.handle_exception_subclasses
                     and type(exc) is exc_type  # pylint: disable=unidiomatic-typecheck
                 ):
                     pass_to_handler = True
-                elif self.handle_exc_subclasses:
+                elif self.handle_exception_subclasses:
                     pass_to_handler = True
         return pass_to_handler
 
@@ -421,6 +423,8 @@ class MockRouter(Generic[E]):
             return endpoint_function()
         except Exception as exc:
             if self.exception_handler and self._should_pass_to_handler(exc):
-                exc = cast(E, exc)  # satisfy type-checker by making exc type 'E'
+                exc = cast(
+                    ExpectedExceptionTypes, exc
+                )  # satisfy type-checker by making exc type 'E'
                 return self.exception_handler(request, exc)
             raise

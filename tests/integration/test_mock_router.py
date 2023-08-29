@@ -191,7 +191,7 @@ def test_handler_errors_filtering(httpx_mock: HTTPXMock):  # noqa: F811
     errors are passed to the handler, and that all other types are raised again."""
 
     class TestValueError(ValueError):
-        """Subclass of ValueError to test handle_exc_subclasses"""
+        """Subclass of ValueError to test handle_exception_subclasses"""
 
     def handler(request: httpx.Request, exc: Union[ValueError, TestValueError]):
         return httpx.Response(status_code=500)
@@ -212,7 +212,7 @@ def test_handler_errors_filtering(httpx_mock: HTTPXMock):  # noqa: F811
         )
 
     @throwaway.get("/raise2")
-    def fails_also():  # will only get passed to error if we set handle_exc_subclasses
+    def fails_also():  # will only get passed to error if we set handle_exception_subclasses
         raise TestValueError()
 
     httpx_mock.add_callback(callback=throwaway.handle_request)
@@ -224,13 +224,13 @@ def test_handler_errors_filtering(httpx_mock: HTTPXMock):  # noqa: F811
         with pytest.raises(TestValueError):
             client.get("/raise2")
 
-        throwaway.handle_exc_subclasses = True
+        throwaway.handle_exception_subclasses = True
         client.get("/raise2")
 
 
 def test_exceptions_no_handler(httpx_mock: HTTPXMock):  # noqa: F811
-    """Errors specified in http_exceptions_to_handle should be raised normally if
-    http_exception_handler is not defined"""
+    """Errors specified in exceptions_to_handle should be raised normally if
+    exception_handler is not defined"""
     throwaway: MockRouter = MockRouter(
         exceptions_to_handle=(HttpException, HTTPException)
     )
