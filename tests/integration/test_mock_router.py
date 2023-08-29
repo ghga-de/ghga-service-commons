@@ -244,3 +244,22 @@ def test_exceptions_no_handler(httpx_mock: HTTPXMock):  # noqa: F811
     with httpx.Client(base_url=BASE_URL) as client:
         with pytest.raises(HTTPException):
             client.get("/")
+
+
+def test_no_exceptions_specified(httpx_mock: HTTPXMock):  # noqa: F811
+    """Make sure nothing is passed to the error handler if we omit exceptions_to_handle"""
+
+    def handler(request: httpx.Request, exc: HTTPException):
+        return httpx.Response(status_code=500)
+
+    throwaway: MockRouter = MockRouter(exception_handler=handler)
+
+    @throwaway.get("/")
+    def raise_an_error():
+        raise HTTPException(status_code=404)
+
+    httpx_mock.add_callback(callback=throwaway.handle_request)
+
+    with httpx.Client(base_url=BASE_URL) as client:
+        with pytest.raises(HTTPException):
+            client.get("/")

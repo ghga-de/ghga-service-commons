@@ -123,7 +123,7 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
             `exceptions_to_handle`:
                 tuple containing the exception types to pass to the exception_handler.
                 This parameter has no effect if `exception_handler` is None.
-                If None, all exceptions will be passed to the handler. If provided, only
+                If None, no exceptions will be passed to the handler. If provided, only
                 the exceptions specified will be passed to the handler. All other exception
                 types will be re-raised.
 
@@ -390,7 +390,7 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
     def _should_pass_to_handler(self, exc: Exception):
         """Determine whether the provided exception should be passed to the handler"""
         if not self.exceptions_to_handle:
-            return True
+            return False
 
         pass_to_handler = False
         for exc_type in self.exceptions_to_handle:
@@ -413,9 +413,8 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
         httpx_mock.add_callback(callback=mock_router.handle_request)
         ```
         If self.exception_handler is specified, any errors matching self.exceptions_to_handle
-        will be passed to the handler. If self.exceptions_to_handle is None, then the
-        handler will be given the exception regardless of type. In all other cases,
-        the exception will be re-raised.
+        will be passed to the handler. In all other cases, the exception will be
+        re-raised.
         """
 
         try:
