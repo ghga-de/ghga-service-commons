@@ -15,4 +15,6 @@
 
 """A library that contains the common functionality used in services of GHGA"""
 
-__version__ = "0.7.0"
+from importlib.metadata import version
+
+__version__ = version(__package__)
