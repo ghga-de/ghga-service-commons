@@ -20,7 +20,6 @@ from io import BytesIO
 from unittest.mock import Mock
 
 import pytest
-
 from ghga_service_commons.httpyexpect.client import (
     ExceptionMapping,
     Response,
@@ -34,11 +33,11 @@ class ExceptionA(RuntimeError):
 
 
 class ExceptionB(RuntimeError):
-    """Another Exception"""
+    """Another Exception."""
 
 
 class ExceptionC(RuntimeError):
-    """Yet, another Exception"""
+    """Yet, another Exception."""
 
 
 @pytest.mark.parametrize(
@@ -70,8 +69,11 @@ class ExceptionC(RuntimeError):
 def test_typical_client_usage(
     status_code: int, body: HttpExceptionBody, expected_exception: type[Exception]
 ):
-    """Test the typical way how the client may use the `ResponseTranslator` together
-    with the `ExceptionMapping` classes."""
+    """Test `ResponseTranslator` in tandem with `ExceptionMapping`.
+
+    Test the typical way how the client may use the `ResponseTranslator` together
+    with the `ExceptionMapping` classes.
+    """
     spec = {
         400: {
             "testA": lambda exception_id, description, data: ExceptionA(),

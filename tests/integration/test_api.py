@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Test api module"""
+"""Test api module."""
 
 import asyncio
 import multiprocessing
@@ -23,19 +23,19 @@ import httpx
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from ghga_service_commons.api import ApiConfigBase, run_server
 from ghga_service_commons.httpyexpect.server import HttpException
 from ghga_service_commons.httpyexpect.server.handlers.fastapi_ import (
     configure_exception_handler,
 )
+
 from tests.integration.fixtures.hello_world_test_app import GREETING, app
 from tests.integration.fixtures.utils import find_free_port
 
 
 @pytest.mark.asyncio
 async def test_run_server():
-    """Test the run_server wrapper function"""
+    """Test the run_server wrapper function."""
     config = ApiConfigBase()
     config.port = find_free_port()
 
@@ -60,7 +60,6 @@ async def test_run_server():
 
 def test_configure_exception_handler():
     """Test the exception handler configuration of a FastAPI app."""
-
     # example params for an http exception
     status_code = 400
     exception_id = "testException"
@@ -74,7 +73,7 @@ def test_configure_exception_handler():
     # add a route function that raises an httpyexpect error:
     @app.get("/test")
     def test_route():
-        """A test route function raising an httpyexpect error"""
+        """A test route function raising an httpyexpect error."""
         raise HttpException(
             status_code=status_code,
             exception_id=exception_id,

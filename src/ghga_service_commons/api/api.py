@@ -13,10 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Functionality for initializing, configuring, and running RESTful
-webapps with FastAPI"""
+"""Tools to setup and running FastAPI apps.
 
-from typing import Dict, Optional, Sequence, Union
+Contains functionality for initializing, configuring, and running
+RESTful webapps with FastAPI.
+"""
+
+from collections.abc import Sequence
+from typing import Optional, Union
 
 import uvicorn
 from fastapi import FastAPI
@@ -38,8 +42,10 @@ LogLevel = Literal["critical", "error", "warning", "info", "debug", "trace"]
 
 class ApiConfigBase(BaseSettings):
     """A base class with API-required config params.
+
     Inherit your config class from this class if you need
-    to run an API backend."""
+    to run an API backend.
+    """
 
     host: str = Field("127.0.0.1", description="IP of the host.")
     port: int = Field(
@@ -122,13 +128,12 @@ class ApiConfigBase(BaseSettings):
 
 def configure_app(app: FastAPI, config: ApiConfigBase):
     """Configure a FastAPI app based on a config object."""
-
     app.root_path = config.api_root_path
     app.openapi_url = config.openapi_url
     app.docs_url = config.docs_url
 
     # configure CORS:
-    kwargs: Dict[str, Optional[Union[Sequence[str], bool]]] = {}
+    kwargs: dict[str, Optional[Union[Sequence[str], bool]]] = {}
     if config.cors_allowed_origins is not None:
         kwargs["allow_origins"] = config.cors_allowed_origins
     if config.cors_allowed_headers is not None:
@@ -145,8 +150,10 @@ def configure_app(app: FastAPI, config: ApiConfigBase):
 
 
 async def run_server(app: Union[FastAPI, str], config: ApiConfigBase):
-    """Starts backend server. In contrast to the behavior of `uvicorn.run`, it does not
-    create a new asyncio event loop but uses the outer one.
+    """Start backend server.
+
+    In contrast to the behavior of `uvicorn.run`, it does not create a new asyncio event
+    loop but uses the outer one.
 
     Args:
         app_import_path:
@@ -160,7 +167,6 @@ async def run_server(app: Union[FastAPI, str], config: ApiConfigBase):
             A pydantic BaseSettings class that contains attributes
             "host", "port", and "log_level".
     """
-
     uv_config = uvicorn.Config(
         app=app,
         host=config.host,

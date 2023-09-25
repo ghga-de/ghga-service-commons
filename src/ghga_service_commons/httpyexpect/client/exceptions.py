@@ -20,11 +20,12 @@ from ghga_service_commons.httpyexpect.base_exception import HttpyExpectError
 
 
 class UnexpectedError(HttpyExpectError):
-    """
+    """Error for HTTP Error/ExceptionMapping mismatch.
+
     Thrown when an HTTP error (originating from the server-side) could not be mapped
     using an ExceptionMapping (see the `mapping` module).
     (The HTTP error is, however, following the HttpyExceptionBody model as defined in
-    the `httpyexpect.models` module.)
+    the `httpyexpect.models` module.).
     """
 
     def __init__(
@@ -63,7 +64,8 @@ class UnexpectedError(HttpyExpectError):
 
 
 class UnstructuredError(HttpyExpectError):
-    """
+    """Error for bad error response model.
+
     Thrown when an HTTP error (originating from the server-side) did not comply with
     the HttpyExceptionBody model as defined in the `httpyexpect.models` module.
     """

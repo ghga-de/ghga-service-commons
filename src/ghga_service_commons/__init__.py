@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A library that contains the common functionality used in services of GHGA"""
+"""A library that contains the common functionality used in services of GHGA."""
 
 from importlib.metadata import version
 

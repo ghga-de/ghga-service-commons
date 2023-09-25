@@ -17,8 +17,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
 from datetime import datetime, timezone
-from typing import Any, Callable, Generator
+from typing import Any, Callable
 
 from pydantic import parse_obj_as
 
@@ -58,9 +59,9 @@ class DateTimeUTC(datetime):
 
 
 def assert_tz_is_utc() -> None:
-    """Verifies that the default timezone is set to UTC.
+    """Verify that the default timezone is set to UTC.
 
-    Raises a Runtimeerror if the default timezone is set differently.
+    Raise a Runtimeerror if the default timezone is set differently.
     """
     if datetime.now().astimezone().tzinfo != UTC:
         raise RuntimeError("System must be configured to use UTC.")

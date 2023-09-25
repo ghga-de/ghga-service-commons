@@ -18,9 +18,10 @@
 from __future__ import annotations
 
 from abc import ABC
+from collections.abc import Generator
 from contextlib import contextmanager
 from tempfile import NamedTemporaryFile
-from typing import BinaryIO, Generator, cast
+from typing import BinaryIO, cast
 
 __all__ = ["big_temp_file", "NamedBinaryIO"]
 
@@ -33,7 +34,7 @@ class NamedBinaryIO(ABC, BinaryIO):
 
 @contextmanager
 def big_temp_file(size: int) -> Generator[NamedBinaryIO, None, None]:
-    """Generates a big file with approximately the specified size in bytes."""
+    """Generate a big file with approximately the specified size in bytes."""
     current_size = 0
     current_number = 0
     next_number = 1

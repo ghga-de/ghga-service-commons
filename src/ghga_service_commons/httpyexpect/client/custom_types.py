@@ -16,7 +16,8 @@
 
 """Custom types and type aliases."""
 
-from typing import Any, Callable, Literal, Mapping, Protocol
+from collections.abc import Mapping
+from typing import Any, Callable, Literal, Protocol
 
 ExceptionFactoryParam = Literal["status_code", "exception_id", "description", "data"]
 StatusCode = int
@@ -32,5 +33,5 @@ class Response(Protocol):
     """Status code of the Response"""
 
     def json(self, **kwargs: Any) -> Any:
-        """JSON representation of the Response"""
+        """JSON representation of the Response."""
         ...

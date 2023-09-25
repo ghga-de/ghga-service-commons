@@ -14,5 +14,4 @@
 # limitations under the License.
 #
 
-"""Logic for handling httpyexpect exceptions with different backend frameworks.
-"""
+"""Logic for handling httpyexpect exceptions with different backend frameworks."""

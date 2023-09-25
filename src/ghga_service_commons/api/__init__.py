@@ -15,7 +15,7 @@
 #
 
 
-"""Functionality building HTTP APIs using FastAPI"""
+"""Functionality building HTTP APIs using FastAPI."""
 
 from ghga_service_commons.api.api import (  # noqa: F401
     ApiConfigBase,

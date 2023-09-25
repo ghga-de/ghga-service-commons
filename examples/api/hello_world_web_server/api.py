@@ -13,10 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Definition of API endpoints"""
+"""Definition of API endpoints."""
 
 from fastapi import Depends, FastAPI
-
 from ghga_service_commons.api import configure_app
 
 from .config import get_config
@@ -28,5 +27,6 @@ configure_app(app, config=get_config())
 @app.get("/")
 async def index(config=Depends(get_config)):
     """Greet the World
-    (or whoever was configured in config.greeting)"""
+    (or whoever was configured in config.greeting).
+    """
     return f"Hello {config.greeting}."

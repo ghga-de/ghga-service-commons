@@ -19,7 +19,6 @@
 from contextlib import nullcontext
 
 import pytest
-
 from ghga_service_commons.httpyexpect.validation import (
     ValidationError,
     assert_error_code,
@@ -44,7 +43,6 @@ from ghga_service_commons.httpyexpect.validation import (
 )
 def test_check_status_code(status_code: object, is_valid: bool):
     """Test the `check_status_code` function."""
-
     with nullcontext() if is_valid else pytest.raises(ValidationError):  # type: ignore
         assert_error_code(status_code)
 
@@ -61,7 +59,6 @@ def test_check_status_code(status_code: object, is_valid: bool):
 )
 def test_check_exception_id(exception_id: object, is_valid: bool):
     """Test the `check_exception_id` function."""
-
     with nullcontext() if is_valid else pytest.raises(ValidationError):  # type: ignore
         validate_exception_id(exception_id)
 

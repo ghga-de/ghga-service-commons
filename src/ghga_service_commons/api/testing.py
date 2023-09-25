@@ -23,15 +23,14 @@ import httpx
 
 
 def get_free_port() -> int:
-    """Finds and returns a free port on localhost."""
+    """Find and return a free port on localhost."""
     sock = socket.socket()
     sock.bind(("", 0))
     return int(sock.getsockname()[1])
 
 
 class AsyncTestClient(httpx.AsyncClient):
-    """A client for testing ASGI applications in the context of a running async event
-    loop.
+    """Client for testing ASGI apps in the context of a running async event loop.
 
     Usage: ```
     from fastapi import FastAPI
@@ -55,5 +54,4 @@ class AsyncTestClient(httpx.AsyncClient):
 
     def __init__(self, app: Callable[..., Any]):
         """Initialize with ASGI app."""
-
         super().__init__(app=app, base_url="http://localhost:8080")

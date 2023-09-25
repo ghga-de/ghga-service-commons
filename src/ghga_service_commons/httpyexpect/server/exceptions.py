@@ -34,8 +34,10 @@ from ghga_service_commons.httpyexpect.validation import (
 
 
 class HttpException(HttpyExpectError):
-    """A generic exception model that can be translated into an HTTP response according
-    to the httpyexpect exception schema.
+    """A generic exception model.
+
+    This can be translated into an HTTP response according to the httpyexpect exception
+    schema.
     """
 
     def __init__(
@@ -61,7 +63,6 @@ class HttpException(HttpyExpectError):
                 same set of properties here. This object may be empty (in case no data
                 is required)"
         """
-
         assert_error_code(status_code)
         self.status_code = status_code
 
@@ -91,11 +92,12 @@ class HttpCustomExceptionBase(ABC, HttpException):
 
     class DataModel(pydantic.BaseModel):
         """An empty model used as default for describing exception data.
+
         Please overwrite this to define your own data model.
         """
 
         class Config:
-            """Model Config"""
+            """Model Config."""
 
             extra = pydantic.Extra.allow
 
@@ -114,7 +116,6 @@ class HttpCustomExceptionBase(ABC, HttpException):
                 same set of properties here. This object may be empty (in case no data
                 is required)"
         """
-
         self._check_data_model_cls()
 
         # validate the data against the custom model:
@@ -134,15 +135,13 @@ class HttpCustomExceptionBase(ABC, HttpException):
 
     @classmethod
     def _check_data_model_cls(cls):
-        """Makes sure that the DataModel class has the right base."""
-
+        """Make sure that the DataModel class has the right base."""
         if not issubclass(cls.DataModel, pydantic.BaseModel):
             raise TypeError("The DataModel is not a subclass of pydantic's BaseModel.")
 
     @classmethod
     def get_body_model(cls):
-        """Creates and returns a custom pydantic model describing the exception body."""
-
+        """Create and return a custom pydantic model describing the exception body."""
         cls._check_data_model_cls()
 
         body_model_name = cls.__name__

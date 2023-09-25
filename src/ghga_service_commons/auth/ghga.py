@@ -36,7 +36,7 @@ __all__ = [
 
 
 class UserStatus(str, Enum):
-    """User status"""
+    """User status."""
 
     ACTIVE = "active"
     INACTIVE = "inactive"
@@ -44,7 +44,7 @@ class UserStatus(str, Enum):
 
 
 class AcademicTitle(str, Enum):
-    """Academic title"""
+    """Academic title."""
 
     DR = "Dr."
     PROF = "Prof."

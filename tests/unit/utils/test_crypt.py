@@ -19,9 +19,6 @@
 
 import base64
 
-from nacl.public import PrivateKey, PublicKey
-from pytest import raises
-
 from ghga_service_commons.utils.crypt import (
     KeyPair,
     decode_key,
@@ -30,6 +27,8 @@ from ghga_service_commons.utils.crypt import (
     encrypt,
     generate_key_pair,
 )
+from nacl.public import PrivateKey, PublicKey
+from pytest import raises
 
 
 def test_generate_key_pair():

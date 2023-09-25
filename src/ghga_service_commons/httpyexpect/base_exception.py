@@ -19,6 +19,7 @@
 
 class HttpyExpectError(Exception):
     """A base exception that all other exceptions in this library inherit from.
+
     Therefore, by catching this exception type, you can catch all exceptions thrown by
     this library.
     """

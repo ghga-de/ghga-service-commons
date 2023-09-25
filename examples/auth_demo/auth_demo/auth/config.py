@@ -20,11 +20,10 @@ __all__ = ["DemoAuthContext", "DemoAuthConfig"]
 
 from typing import Any, cast
 
-from pydantic import BaseModel, Field
-
 from ghga_service_commons.auth.jwt_auth import JWTAuthConfig
 from ghga_service_commons.utils.jwt_helpers import generate_jwk
 from ghga_service_commons.utils.utc_dates import DateTimeUTC
+from pydantic import BaseModel, Field
 
 
 class DemoAuthContext(BaseModel):

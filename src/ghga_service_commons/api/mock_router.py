@@ -13,12 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""A class for mocking API endpoints when testing with the httpx_mock fixture"""
+"""A class for mocking API endpoints when testing with the httpx_mock fixture."""
 
 import re
 from functools import partial
 from inspect import signature
-from typing import Any, Callable, Generic, Optional, Type, TypeVar, cast, get_type_hints
+from typing import Any, Callable, Generic, Optional, TypeVar, cast, get_type_hints
 
 import httpx
 import pytest
@@ -44,7 +44,6 @@ def _compile_regex_url(path: str) -> str:
 
     This function is not intended to be used outside the module.
     """
-
     brackets_to_strip = "{}"
 
     url = re.sub(
@@ -56,7 +55,7 @@ def _compile_regex_url(path: str) -> str:
 
 
 def _get_signature_info(endpoint_function: Callable) -> dict[str, Any]:
-    """Retrieves the typed parameter info from function signature minus return type.
+    """Retrieve the typed parameter info from function signature minus return type.
 
     This function is not intended to be used outside the module.
     """
@@ -78,7 +77,7 @@ def assert_all_responses_were_requested() -> bool:
 
 
 class RegisteredEndpoint(BaseModel):
-    """Endpoint data with the url turned into regex string to get parameters in path"""
+    """Endpoint data with the url turned into regex string to get parameters in path."""
 
     url_pattern: str
     endpoint_function: Callable
@@ -108,7 +107,7 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
         exception_handler: Optional[
             Callable[[httpx.Request, ExpectedExceptionTypes], Any]
         ] = None,
-        exceptions_to_handle: Optional[tuple[Type[Exception], ...]] = None,
+        exceptions_to_handle: Optional[tuple[type[Exception], ...]] = None,
         handle_exception_subclasses: bool = False,
     ):
         """Initialize the MockRouter with an optional exception handler.
@@ -161,7 +160,6 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
         Raises:
             TypeError: When one or more parameters are missing type-hint information.
         """
-
         all_parameters = signature(endpoint_function).parameters
 
         for parameter in all_parameters:
@@ -175,7 +173,7 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
     def _ensure_decorator_and_endpoint_parameters_match(
         path: str, signature_parameters: dict[str, Any]
     ):
-        """Verify consistency between path in path decorator and the decorated function
+        """Verify consistency between path in path decorator and the decorated function.
 
         Args:
             path: the path specified by the MockRouter decorator.
@@ -218,7 +216,7 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
         self._methods[method].append(registered_endpoint)
 
     def _validate_endpoint(self, path: str, endpoint_function: Callable):
-        """Perform validation on the endpoint before adding it
+        """Perform validation on the endpoint before adding it.
 
         Verify that all the `endpoint_function` parameters are typed.
         Verify that the `path` parameter names match the `endpoint_function` signature.
@@ -241,28 +239,23 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
         return endpoint_function
 
     def get(self, path: str) -> Callable:
-        """Decorator function to add endpoint to Handler with `GET` method"""
-
+        """Add endpoint to Handler with `GET` method."""
         return partial(self._base_endpoint_wrapper, path, "GET")
 
     def delete(self, path: str) -> Callable:
-        """Decorator function to add endpoint to Handler with `DELETE` method"""
-
+        """Add endpoint to Handler with `DELETE` method."""
         return partial(self._base_endpoint_wrapper, path, "DELETE")
 
     def post(self, path: str) -> Callable:
-        """Decorator function to add endpoint to Handler with `POST` method"""
-
+        """Add endpoint to Handler with `POST` method."""
         return partial(self._base_endpoint_wrapper, path, "POST")
 
     def patch(self, path: str) -> Callable:
-        """Decorator function to add endpoint to Handler with `PATCH` method"""
-
+        """Add endpoint to Handler with `PATCH` method."""
         return partial(self._base_endpoint_wrapper, path, "PATCH")
 
     def put(self, path: str) -> Callable:
-        """Decorator function to add endpoint to Handler with `PUT` method"""
-
+        """Add endpoint to Handler with `PUT` method."""
         return partial(self._base_endpoint_wrapper, path, "PUT")
 
     @staticmethod
@@ -293,7 +286,6 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
                 be converted/cast to the type specified by the type-hint for the
                 corresponding parameter.
         """
-
         # type-cast based on type-hinting info
         typed_parameters: dict[str, Any] = {}
         for parameter_name, value in parsed_url_parameters.items():
@@ -332,7 +324,6 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
         This should always match because we will have already performed the match in
         _get_registered_endpoint.
         """
-
         matched_url = re.search(endpoint.url_pattern, url)
         matched_url = cast(re.Match, matched_url)  # never None, make type checker happy
         return matched_url.groupdict()
@@ -366,8 +357,10 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
         )
 
     def _build_loaded_endpoint_function(self, request: httpx.Request) -> partial:
-        """Match a request to the correct endpoint, build typed parameter dictionary,
-        and return loaded partial function.
+        """Match a request to the correct endpoint.
+
+        Based on the endpoint matched, build the typed parameter dictionary and
+        return the loaded partial function.
         """
         url = str(request.url)
 
@@ -388,24 +381,24 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
         return partial(endpoint.endpoint_function, **typed_parameters)
 
     def _should_pass_to_handler(self, exc: Exception):
-        """Determine whether the provided exception should be passed to the handler"""
+        """Determine whether the provided exception should be passed to the handler."""
         if not self.exceptions_to_handle:
             return False
 
         pass_to_handler = False
         for exc_type in self.exceptions_to_handle:
-            if isinstance(exc, exc_type):
-                if (
+            if isinstance(exc, exc_type) and (
+                self.handle_exception_subclasses
+                or (
                     not self.handle_exception_subclasses
                     and type(exc) is exc_type  # pylint: disable=unidiomatic-typecheck
-                ):
-                    pass_to_handler = True
-                elif self.handle_exception_subclasses:
-                    pass_to_handler = True
+                )
+            ):
+                pass_to_handler = True
         return pass_to_handler
 
     def handle_request(self, request: httpx.Request):
-        """Route intercepted request to the registered endpoint and return response
+        """Route intercepted request to the registered endpoint and return response.
 
         If using this with httpx_mock, then this function should be the callback.
         e.g.:
@@ -416,7 +409,6 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
         will be passed to the handler. In all other cases, the exception will be
         re-raised.
         """
-
         try:
             endpoint_function = self._build_loaded_endpoint_function(request)
             return endpoint_function()

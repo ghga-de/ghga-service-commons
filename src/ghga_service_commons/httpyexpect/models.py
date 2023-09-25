@@ -15,7 +15,7 @@
 
 """General data model with build in validation."""
 
-from typing import Any, Dict
+from typing import Any
 
 from pydantic import BaseModel, Extra, Field, constr
 
@@ -23,9 +23,9 @@ EXCEPTION_ID_PATTERN = r"^[a-z][a-zA-Z0-9]{2,39}$"
 
 
 class HttpExceptionBody(BaseModel):
-    """
-    An opinionated base schema/model for the response body shipped with HTTP exception
-    (on 4xx or 5xx status codes).
+    """An opinionated base schema/model for the response body.
+
+    Shipped with HTTP exception (on 4xx or 5xx status codes).
     """
 
     class Config:
@@ -33,7 +33,7 @@ class HttpExceptionBody(BaseModel):
 
         extra = Extra.forbid
 
-    data: Dict[str, Any] = Field(
+    data: dict[str, Any] = Field(
         ...,
         description=(
             "An object containing further details on the exception cause in a"

@@ -31,8 +31,10 @@ from ghga_service_commons.httpyexpect.validation import (
 
 
 class ResponseTranslator:
-    """Translates a specific response to an HTTP call using an ExceptionMapping to
-    python exceptions (in case of an error code)."""
+    """Translate a specific response to an HTTP call.
+
+    Use ExceptionMapping to translate to python exception (in case of an error code).
+    """
 
     def __init__(self, response: Response, *, exception_map: ExceptionMapping):
         """Initialize the translator.
@@ -45,13 +47,12 @@ class ResponseTranslator:
                 An exception mapping specifying translations between status codes plus
                 exception IDs and python exceptions.
         """
-
         self._exception_map = exception_map
         self._response = response
 
     @staticmethod
     def _get_validated_exception_body(response: Response) -> HttpExceptionBody:
-        """Validates the response body against the HttpyExceptionBody model"""
+        """Validate the response body against the HttpyExceptionBody model."""
         body = response.json()
         try:
             return HttpExceptionBody(**body)
@@ -65,7 +66,6 @@ class ResponseTranslator:
         cls, response: Response, exception_map: ExceptionMapping
     ) -> Exception:
         """Construct a python exception from a response."""
-
         # validate and parse the body of the exception response:
         body = cls._get_validated_exception_body(response)
 
@@ -92,7 +92,9 @@ class ResponseTranslator:
         return factory_kit.factory(**required_param_values)
 
     def get_error(self) -> Optional[Exception]:
-        """In case the provided response corresponds to an error, it will translate the
+        """Translate the response into a python exception.
+
+        In case the provided response corresponds to an error, it will translate the
         response into a python exception and return it.
         Please note, this function will only return exceptions but not raise them.
 
@@ -110,7 +112,9 @@ class ResponseTranslator:
         )
 
     def raise_for_error(self):
-        """In case the provided response corresponds to an error, it will translate the
+        """Translate response into python exception.
+
+        In case the provided response corresponds to an error, it will translate the
         response into a python exception and raise it. Otherwise, nothing happens.
         """
         exception = self.get_error()

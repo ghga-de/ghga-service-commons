@@ -21,17 +21,17 @@ See the router.py module for how to use these policies in REST endpoints.
 
 from typing import Optional
 
-from auth_demo.auth.config import DemoAuthContext
-from auth_demo.container import Container  # type: ignore
 from dependency_injector.wiring import Provide, inject
 from fastapi import Depends, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
 from ghga_service_commons.auth.context import AuthContextProtocol
 from ghga_service_commons.auth.policies import (
     get_auth_context_using_credentials,
     require_auth_context_using_credentials,
 )
+
+from auth_demo.auth.config import DemoAuthContext
+from auth_demo.container import Container  # type: ignore
 
 __all__ = ["DemoAuthContext", "get_auth", "require_auth", "require_vip"]
 

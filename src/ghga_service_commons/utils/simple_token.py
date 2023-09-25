@@ -26,13 +26,11 @@ def generate_token() -> str:
 
 def hash_token(token: str) -> str:
     """Hash the given token."""
-
     return sha256(token.encode()).hexdigest()
 
 
 def generate_token_and_hash() -> tuple[str, str]:
     """Generate a random token and its hash."""
-
     token = generate_token()
     token_hash = hash_token(token)
     return token, token_hash
@@ -40,5 +38,4 @@ def generate_token_and_hash() -> tuple[str, str]:
 
 def check_token(token: str, token_hashes: list[str]) -> bool:
     """Check whether the given token matches one of the given token hashes."""
-
     return hash_token(token) in token_hashes

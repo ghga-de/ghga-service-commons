@@ -18,13 +18,13 @@
 
 from typing import NamedTuple
 
-from auth_demo.auth.config import AUTH_KEY_PAIR
-
 from ghga_service_commons.utils.jwt_helpers import sign_and_serialize_token
+
+from auth_demo.auth.config import AUTH_KEY_PAIR
 
 
 class UserInfo(NamedTuple):
-    """Basic user info"""
+    """Basic user info."""
 
     name: str
     is_vip: bool

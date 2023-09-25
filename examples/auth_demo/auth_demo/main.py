@@ -18,13 +18,13 @@
 
 import asyncio
 
+from fastapi import FastAPI
+from ghga_service_commons.api import configure_app, run_server
+from ghga_service_commons.utils.utc_dates import assert_tz_is_utc
+
 from auth_demo.config import Config
 from auth_demo.container import Container  # type: ignore
 from auth_demo.router import router
-from fastapi import FastAPI
-
-from ghga_service_commons.api import configure_app, run_server
-from ghga_service_commons.utils.utc_dates import assert_tz_is_utc
 
 
 def get_configured_container(config: Config) -> Container:
@@ -35,7 +35,7 @@ def get_configured_container(config: Config) -> Container:
 
 
 def get_configured_app(config: Config) -> FastAPI:
-    """Create and configure the FastAPI app"""
+    """Create and configure the FastAPI app."""
     app = FastAPI()
     app.include_router(router)
     configure_app(app, config=config)

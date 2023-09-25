@@ -19,9 +19,8 @@
 from contextlib import nullcontext
 
 import pytest
-from pydantic import ValidationError
-
 from ghga_service_commons.httpyexpect.models import HttpExceptionBody
+from pydantic import ValidationError
 
 
 @pytest.mark.parametrize(
@@ -49,6 +48,5 @@ def test_http_exception_body(
     exception_id: str, description: str, data: dict, is_valid: bool
 ):
     """Test validation logic of the HTTPExceptionBody model."""
-
     with nullcontext() if is_valid else pytest.raises(ValidationError):  # type: ignore
         HttpExceptionBody(exception_id=exception_id, description=description, data=data)

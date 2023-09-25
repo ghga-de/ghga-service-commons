@@ -15,12 +15,14 @@
 #
 
 """This module provides functionality for working with exception mappings.
+
 A exception mapping is a datastructure that maps an HTTP error response (4xx or 5xx)
 to a python exception.
 """
 
 import inspect
-from typing import Any, Mapping, NamedTuple, Optional, Sequence, cast
+from collections.abc import Mapping, Sequence
+from typing import Any, NamedTuple, Optional, cast
 
 from ghga_service_commons.httpyexpect.client.custom_types import (
     ExceptionFactory,
@@ -39,8 +41,9 @@ EXCEPTION_FACTORY_PARAMS = ("status_code", "exception_id", "description", "data"
 
 
 class FactoryKit(NamedTuple):
-    """A container for an exception factory plus instruction on which parameters
-    are required.
+    """A container for an exception factory.
+
+    Also includes instruction on which parameters are required.
     """
 
     factory: ExceptionFactory
@@ -48,8 +51,8 @@ class FactoryKit(NamedTuple):
 
 
 class ExceptionMapping:
-    """
-    A datastructure that maps an HTTP response (4xx or 5xx) to a python exception.
+    """A datastructure that maps an HTTP response (4xx or 5xx) to a python exception.
+
     It will except a dict-based specification defining the mapping as input.
     This spec will be validated and public methods and public methods will be exposes
     that simplify the interaction with the encoded exception mapping.
@@ -74,7 +77,6 @@ class ExceptionMapping:
         Raises:
             ValidationError: If the provided spec or fallback_factory are invalid.
         """
-
         self._spec: Any = spec
         self._fallback_factory = fallback_factory
 
@@ -90,8 +92,11 @@ class ExceptionMapping:
         *,
         status_code: int,
     ) -> None:
-        """Check that exception id mapping provided per status code is a valid python
-        Mapping."""
+        """Validate exception id mapping.
+
+        Check that the exception id mapping provided per status code is a valid python
+        Mapping.
+        """
         if not isinstance(exc_id_mapping, Mapping):
             raise ValidationError(
                 f"The mapping provided for the {status_code} status code was not a"
@@ -102,7 +107,7 @@ class ExceptionMapping:
     def _get_error_intro(
         status_code: Optional[int] = None, exception_id: Optional[str] = None
     ):
-        """Returns an intro for a ValidationError.
+        """Return an intro for a ValidationError.
 
         To be used only by the `inspect_factory_params` and the `check_exception_factory`
         functions.
@@ -132,7 +137,6 @@ class ExceptionMapping:
         Returns:
             A sequence of required parameters.
         """
-
         try:
             factory_signature = inspect.signature(factory)
         except ValueError:
@@ -188,7 +192,6 @@ class ExceptionMapping:
         status_code: Optional[int] = None,
     ) -> None:
         """Check the signature of an exception factory."""
-
         if not callable(factory):
             raise ValidationError(
                 f"{cls._get_error_intro(status_code, exception_id)} was not callable."
@@ -200,8 +203,7 @@ class ExceptionMapping:
 
     @classmethod
     def _validate(cls, spec: ExceptionMappingSpec):
-        """
-        Validates a dict-based specification of a exception mappings.
+        """Validate a dict-based specification of a exception mappings.
 
         Raises:
             ValidationError: if validation fails.
@@ -222,7 +224,7 @@ class ExceptionMapping:
     def _select_factory(
         self, *, status_code: int, exception_id: str
     ) -> ExceptionFactory:
-        """Selects and return an ExceptionFactory by providing mapping parameters:
+        """Select and return an ExceptionFactory by providing mapping parameters.
 
         Args:
             status_code:
@@ -241,7 +243,7 @@ class ExceptionMapping:
             return self._fallback_factory
 
     def get_factory_kit(self, *, status_code: int, exception_id: str) -> FactoryKit:
-        """Obtain a FactoryKit by providing mapping parameters:
+        """Obtain a FactoryKit by providing mapping parameters.
 
         Args:
             status_code:
