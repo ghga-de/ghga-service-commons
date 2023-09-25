@@ -171,7 +171,7 @@ class ExampleWithArgsError(RuntimeError):
 )
 def test_exception_mapping_validation(spec: ExceptionMappingSpec, is_valid: bool):
     """Test the ExceptionMappingSpec validation from the ExceptionMapping class."""
-    with nullcontext() if is_valid else pytest.raises(ValidationError):  # type: ignore
+    with nullcontext() if is_valid else pytest.raises(ValidationError):
         ExceptionMapping(spec)
 
 
@@ -188,7 +188,7 @@ def test_exception_mapping_validation(spec: ExceptionMappingSpec, is_valid: bool
 )
 def test_fallback_factory_validation(fallback_factory: object, is_valid: bool):
     """Test the ExceptionMappingSpec behavior for validating fallback factories."""
-    with nullcontext() if is_valid else pytest.raises(ValidationError):  # type: ignore
+    with nullcontext() if is_valid else pytest.raises(ValidationError):
         ExceptionMapping({}, fallback_factory=fallback_factory)  # type: ignore
 
 
