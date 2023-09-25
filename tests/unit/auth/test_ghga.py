@@ -43,13 +43,13 @@ context_kwargs = {
 
 def test_create_auth_context():
     """Test that a GHGA auth context can be crated."""
-    context = AuthContext(**context_kwargs)
+    context = AuthContext(**context_kwargs)  # type: ignore
     assert context.dict() == context
 
 
 def test_has_role():
     """Test that roles of the GHGA auth context can be checked."""
-    context = AuthContext(**context_kwargs)
+    context = AuthContext(**context_kwargs)  # type: ignore
     assert context.role == "admin"
     assert has_role(context, "admin")
     assert not has_role(context, "operator")
@@ -70,7 +70,7 @@ def test_has_role():
 
 def test_is_active():
     """Test that the active state of the GHGA auth context can be checked."""
-    context = AuthContext(**context_kwargs)
+    context = AuthContext(**context_kwargs)  # type: ignore
     assert is_active(context)
     context.status = UserStatus.INACTIVE
     assert not is_active(context)
