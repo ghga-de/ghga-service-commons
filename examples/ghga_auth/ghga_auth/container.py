@@ -21,10 +21,10 @@
 
 """Module hosting the dependency injection container."""
 
-from ghga_service_commons.auth.ghga import AuthContext, GHGAAuthContextProvider
 from hexkit.inject import ContainerBase, get_configurator, get_constructor
 
 from ghga_auth.config import Config
+from ghga_service_commons.auth.ghga import AuthContext, GHGAAuthContextProvider
 
 __all__ = ["Container"]
 

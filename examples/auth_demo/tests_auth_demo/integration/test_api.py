@@ -18,11 +18,12 @@
 
 import asyncio
 
-from auth_demo.config import Config
-from auth_demo.main import get_configured_app, get_configured_container
 from fastapi import FastAPI, status
 from fastapi.testclient import TestClient
 from pytest import fixture
+
+from auth_demo.config import Config
+from auth_demo.main import get_configured_app, get_configured_container
 
 
 async def get_app() -> FastAPI:

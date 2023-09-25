@@ -19,11 +19,12 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from ghga_service_commons.auth.jwt_auth import JWTAuthConfig, JWTAuthContextProvider
-from ghga_service_commons.utils.utc_dates import DateTimeUTC, now_as_utc
 from jwcrypto import jwk, jwt
 from pydantic import BaseModel
 from pytest import fixture, mark, raises
+
+from ghga_service_commons.auth.jwt_auth import JWTAuthConfig, JWTAuthContextProvider
+from ghga_service_commons.utils.utc_dates import DateTimeUTC, now_as_utc
 
 AUTH_KEY_PAIR = jwk.JWK.generate(kty="RSA", size=2048)
 

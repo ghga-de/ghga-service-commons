@@ -19,6 +19,7 @@
 from contextlib import nullcontext
 
 import pytest
+
 from ghga_service_commons.httpyexpect.client.custom_types import (
     ExceptionFactory,
     ExceptionFactoryParam,

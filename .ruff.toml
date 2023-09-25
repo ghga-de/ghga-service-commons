@@ -40,6 +40,8 @@ fixable = [
     "D", # pydocstyle
 ]
 
+src = ["src", "tests", "examples"]
+
 target-version = "py39"
 
 [mccabe]

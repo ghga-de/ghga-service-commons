@@ -20,6 +20,7 @@ from io import BytesIO
 from unittest.mock import Mock
 
 import pytest
+
 from ghga_service_commons.httpyexpect.client import (
     ExceptionMapping,
     Response,

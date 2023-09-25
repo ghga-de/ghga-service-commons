@@ -17,6 +17,7 @@
 
 import pydantic
 import pytest
+
 from ghga_service_commons.httpyexpect.models import HttpExceptionBody
 from ghga_service_commons.httpyexpect.server import (
     HttpCustomExceptionBase,

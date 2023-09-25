@@ -15,13 +15,14 @@
 
 """Test the utils.jwt_helpers module."""
 
+from jwcrypto.common import JWException
+from pytest import raises
+
 from ghga_service_commons.utils.jwt_helpers import (
     decode_and_validate_token,
     generate_jwk,
     sign_and_serialize_token,
 )
-from jwcrypto.common import JWException
-from pytest import raises
 
 
 def test_sign_and_validate():

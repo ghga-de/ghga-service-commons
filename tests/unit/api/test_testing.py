@@ -18,6 +18,7 @@
 
 import pytest
 from fastapi import FastAPI
+
 from ghga_service_commons.api.testing import AsyncTestClient
 
 

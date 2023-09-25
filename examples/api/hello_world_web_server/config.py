@@ -17,8 +17,9 @@
 
 from functools import lru_cache
 
-from ghga_service_commons.api import ApiConfigBase
 from hexkit.config import config_from_yaml
+
+from ghga_service_commons.api import ApiConfigBase
 
 
 @config_from_yaml(prefix="hello_world")

@@ -23,12 +23,12 @@ import httpx
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 from ghga_service_commons.api import ApiConfigBase, run_server
 from ghga_service_commons.httpyexpect.server import HttpException
 from ghga_service_commons.httpyexpect.server.handlers.fastapi_ import (
     configure_exception_handler,
 )
-
 from tests.integration.fixtures.hello_world_test_app import GREETING, app
 from tests.integration.fixtures.utils import find_free_port
 

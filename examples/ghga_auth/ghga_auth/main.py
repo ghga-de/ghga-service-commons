@@ -19,12 +19,12 @@
 import asyncio
 
 from fastapi import FastAPI
-from ghga_service_commons.api import configure_app, run_server
-from ghga_service_commons.utils.utc_dates import assert_tz_is_utc
 
 from ghga_auth.config import Config
 from ghga_auth.container import Container  # type: ignore
 from ghga_auth.router import router
+from ghga_service_commons.api import configure_app, run_server
+from ghga_service_commons.utils.utc_dates import assert_tz_is_utc
 
 
 def get_configured_container(config: Config) -> Container:

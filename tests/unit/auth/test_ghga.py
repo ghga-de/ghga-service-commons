@@ -16,6 +16,8 @@
 
 """Test the auth.ghga module."""
 
+from pydantic import EmailStr
+
 from ghga_service_commons.auth.ghga import (
     AcademicTitle,
     AuthConfig,
@@ -26,7 +28,6 @@ from ghga_service_commons.auth.ghga import (
 )
 from ghga_service_commons.utils.jwt_helpers import generate_jwk
 from ghga_service_commons.utils.utc_dates import DateTimeUTC
-from pydantic import EmailStr
 
 context_kwargs = {
     "name": "John Doe",

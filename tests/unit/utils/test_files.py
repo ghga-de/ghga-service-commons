@@ -17,6 +17,7 @@
 """Test the utilities for working with files."""
 
 import pytest
+
 from ghga_service_commons.utils.files import get_file_extension
 
 FILENAMES_AND_EXTENSIONS = {

@@ -21,6 +21,7 @@ from typing import Callable, NamedTuple
 from unittest.mock import Mock
 
 import pytest
+
 from ghga_service_commons.httpyexpect.client.exceptions import UnstructuredError
 from ghga_service_commons.httpyexpect.client.mapping import (
     EXCEPTION_FACTORY_PARAMS,

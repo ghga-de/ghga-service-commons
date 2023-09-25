@@ -16,6 +16,7 @@
 """Definition of API endpoints."""
 
 from fastapi import Depends, FastAPI
+
 from ghga_service_commons.api import configure_app
 
 from .config import get_config

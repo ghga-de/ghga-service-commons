@@ -21,13 +21,13 @@ from typing import Union
 import httpx
 import pytest
 from fastapi import HTTPException
+from pytest_httpx import HTTPXMock, httpx_mock  # noqa: F401
+
 from ghga_service_commons.api.mock_router import (  # noqa: F401
     MockRouter,
     assert_all_responses_were_requested,
 )
 from ghga_service_commons.httpyexpect.server.exceptions import HttpException
-from pytest_httpx import HTTPXMock, httpx_mock  # noqa: F401
-
 from tests.integration.fixtures.mock_api import app
 
 BASE_URL = "http://localhost"

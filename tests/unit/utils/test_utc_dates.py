@@ -18,9 +18,10 @@
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
-from ghga_service_commons.utils.utc_dates import UTC, DateTimeUTC, now_as_utc
 from pydantic import BaseModel
 from pytest import mark, raises
+
+from ghga_service_commons.utils.utc_dates import UTC, DateTimeUTC, now_as_utc
 
 
 @mark.parametrize(

@@ -17,6 +17,7 @@
 import json
 
 import httpx
+
 from ghga_service_commons.api.mock_router import MockRouter
 from ghga_service_commons.httpyexpect.server.exceptions import HttpException
 

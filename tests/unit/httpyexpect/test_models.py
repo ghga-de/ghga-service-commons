@@ -19,8 +19,9 @@
 from contextlib import nullcontext
 
 import pytest
-from ghga_service_commons.httpyexpect.models import HttpExceptionBody
 from pydantic import ValidationError
+
+from ghga_service_commons.httpyexpect.models import HttpExceptionBody
 
 
 @pytest.mark.parametrize(

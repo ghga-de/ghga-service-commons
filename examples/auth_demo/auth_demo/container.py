@@ -21,12 +21,12 @@
 
 """Module hosting the dependency injection container."""
 
-from ghga_service_commons.auth.jwt_auth import JWTAuthContextProvider
 from hexkit.inject import ContainerBase, get_configurator, get_constructor
 
 from auth_demo.auth.config import DemoAuthContext
 from auth_demo.config import Config
 from auth_demo.core import Hangout
+from ghga_service_commons.auth.jwt_auth import JWTAuthContextProvider
 
 __all__ = ["Container"]
 

@@ -20,14 +20,15 @@ from typing import Optional
 
 from fastapi.exceptions import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
+from pydantic import BaseModel
+from pytest import mark, raises
+from starlette.status import HTTP_403_FORBIDDEN
+
 from ghga_service_commons.auth.context import AuthContextProtocol
 from ghga_service_commons.auth.policies import (
     get_auth_context_using_credentials,
     require_auth_context_using_credentials,
 )
-from pydantic import BaseModel
-from pytest import mark, raises
-from starlette.status import HTTP_403_FORBIDDEN
 
 
 class DummyAuthContext(BaseModel):
