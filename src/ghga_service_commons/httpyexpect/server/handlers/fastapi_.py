@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-"""Handeling exceptions in FastAPI. FastAPI has to be installed."""
+"""Handling exceptions in FastAPI. FastAPI has to be installed."""
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
