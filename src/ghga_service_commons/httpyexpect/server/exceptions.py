@@ -18,6 +18,8 @@
 
 from abc import ABC
 
+from pydantic import ConfigDict
+
 try:  # workaround for https://github.com/pydantic/pydantic/issues/5821
     from typing_extensions import Literal
 except ImportError:
@@ -96,10 +98,7 @@ class HttpCustomExceptionBase(ABC, HttpException):
         Please overwrite this to define your own data model.
         """
 
-        class Config:
-            """Model Config."""
-
-            extra = pydantic.Extra.allow
+        model_config = ConfigDict(extra="allow")
 
     def __init__(self, *, status_code: int, description: str, data: dict):
         """Initialize the error with the required metadata.
@@ -157,11 +156,7 @@ class HttpCustomExceptionBase(ABC, HttpException):
 
             exception_id: Literal[cls.exception_id]  # type: ignore
             data: named_data_model  # type: ignore
-
-            class Config:
-                """Configure Model."""
-
-                extra = pydantic.Extra.forbid
+            model_config = ConfigDict(extra="forbid")
 
         # customize the class name by subclassing:
         named_custom_model = type(body_model_name, (CustomBodyModel,), {})

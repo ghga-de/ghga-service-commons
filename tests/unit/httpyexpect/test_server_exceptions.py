@@ -125,7 +125,7 @@ def test_http_custom_exception_body():
     assert issubclass(body_model, pydantic.BaseModel)
 
     # evaluate the schema:
-    body_schema = body_model.schema()
+    body_schema = body_model.model_json_schema()
     assert set(body_schema["properties"].keys()) == {
         "data",
         "description",
@@ -133,13 +133,11 @@ def test_http_custom_exception_body():
     }
 
     exception_id_schema = body_schema["properties"]["exception_id"]
-    assert exception_id_schema["type"] == "string"
-    assert "enum" in exception_id_schema
-    assert exception_id_schema["enum"][0] == MyCustomHttpException.exception_id
+    assert exception_id_schema["const"] == MyCustomHttpException.exception_id
 
     assert "$ref" in body_schema["properties"]["data"]
     data_definition_name = body_schema["properties"]["data"]["$ref"].split("/")[-1]
-    data_definition = body_schema["definitions"][data_definition_name]
+    data_definition = body_schema["$defs"][data_definition_name]
     assert data_definition["type"] == "object"
     assert set(data_definition["properties"].keys()) == {"some_param", "another_param"}
 
