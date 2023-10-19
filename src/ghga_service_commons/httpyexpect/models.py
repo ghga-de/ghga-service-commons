@@ -46,7 +46,9 @@ class HttpExceptionBody(BaseModel):
             + " exception."
         ),
     )
-    exception_id: Annotated[str, StringConstraints(pattern=EXCEPTION_ID_PATTERN)] = Field(  # type: ignore
+    exception_id: Annotated[
+        str, StringConstraints(pattern=EXCEPTION_ID_PATTERN)
+    ] = Field(
         ...,
         description=(
             "An identifier used to distinguish between different exception"
