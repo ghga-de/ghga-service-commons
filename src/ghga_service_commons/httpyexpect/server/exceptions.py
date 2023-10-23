@@ -17,15 +17,10 @@
 """Exception Base models used across all servers."""
 
 from abc import ABC
-
-from pydantic import ConfigDict
-
-try:  # workaround for https://github.com/pydantic/pydantic/issues/5821
-    from typing_extensions import Literal
-except ImportError:
-    from typing import Literal  # type: ignore
+from typing import Literal
 
 import pydantic
+from pydantic import ConfigDict
 
 from ghga_service_commons.httpyexpect.base_exception import HttpyExpectError
 from ghga_service_commons.httpyexpect.models import HttpExceptionBody
