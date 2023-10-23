@@ -126,7 +126,7 @@ def test_http_custom_exception_body():
 
     # evaluate the schema:
     body_schema = body_model.model_json_schema()
-    assert set(body_schema["properties"].keys()) == {
+    assert set(body_schema["properties"]) == {
         "data",
         "description",
         "exception_id",
