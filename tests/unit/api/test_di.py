@@ -39,7 +39,7 @@ def test_dependency_dummy_no_override():
         return dummy
 
     client = TestClient(app)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="'dummy' was not replaced"):
         client.get("/")
 
 
