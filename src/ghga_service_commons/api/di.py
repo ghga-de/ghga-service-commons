@@ -32,7 +32,7 @@ class DependencyDummy:
 
     def __repr__(self):
         """Return a string representation of the dependency."""
-        return f"DependencyDummy({self.label})"
+        return f"DependencyDummy('{self.label}')"
 
     def __call__(self):
         """Should never be called. If this is called it means that this dummy has not
