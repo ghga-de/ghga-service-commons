@@ -27,6 +27,11 @@ from ghga_service_commons.api.di import DependencyDummy
 dummy_dependency = DependencyDummy("dummy")
 
 
+def test_dependency_dummy_repr():
+    """Test that the DependencyDummy has a useful repr."""
+    assert repr(dummy_dependency) == "DependencyDummy('dummy')"
+
+
 def test_dependency_dummy_no_override():
     """Test that using a DependencyDummy in a FastAPI app raises an error if it is not
     overridden.
