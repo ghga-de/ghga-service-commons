@@ -27,7 +27,7 @@ class ObjectStorageNodeConfig(BaseSettings):
 
 
 class ObjectStorageConfig(BaseSettings):
-    """Configuration for all available object storage nodes"""
+    """Configuration for all available object storage nodes indexed by location label"""
 
     object_storages: dict[str, ObjectStorageNodeConfig]
 
