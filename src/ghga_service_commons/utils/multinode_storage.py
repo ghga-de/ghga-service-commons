@@ -29,7 +29,7 @@ class S3ObjectStorageNodeConfig(BaseSettings):
     credentials: S3Config
 
 
-class S3ObjectStorageConfig(BaseSettings):
+class S3ObjectStoragesConfig(BaseSettings):
     """Configuration for all available object storage nodes indexed by location label"""
 
     object_storages: dict[str, S3ObjectStorageNodeConfig]
