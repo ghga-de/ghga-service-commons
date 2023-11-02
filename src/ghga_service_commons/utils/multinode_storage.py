@@ -52,7 +52,7 @@ class S3ObjectStorages(ObjectStorages):
     Object storage instances for a given alias should be instantiated lazily on demand.
     """
 
-    def __init__(self, *, config: S3ObjectStorageConfig):
+    def __init__(self, *, config: S3ObjectStoragesConfig):
         self._config = config
 
     def for_alias(self, endpoint_alias: str) -> tuple[str, S3ObjectStorage]:
