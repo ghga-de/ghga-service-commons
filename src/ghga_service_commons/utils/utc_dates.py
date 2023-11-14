@@ -45,6 +45,8 @@ def set_tz_to_utc(date: datetime) -> datetime:
 # A pydantic type for values that should have an UTC timezone.
 # This behaves exactly like the normal datetime type, but requires that the value
 # has a timezone and converts the timezone to UTC if necessary.
+# Validation and timezone conversion is only done via pydantic. Direct use of DateTimeUTC
+# is identical to normal datetime.
 DateTimeUTC = Annotated[
     datetime,
     BeforeValidator(set_tz_to_utc),
