@@ -23,7 +23,7 @@ from typing import Annotated
 from pydantic import AwareDatetime, TypeAdapter
 from pydantic.functional_validators import BeforeValidator
 
-__all__ = ["DateTimeUTC", "set_tz_to_utc", "UTC", "assert_tz_is_utc", "now_as_utc"]
+__all__ = ["UTCDatetime", "convert_tz_to_utc", "UTC", "assert_tz_is_utc", "now_as_utc"]
 
 UTC = timezone.utc
 
@@ -37,33 +37,34 @@ def assert_tz_is_utc() -> None:
         raise RuntimeError("System must be configured to use UTC.")
 
 
-def set_tz_to_utc(date: datetime) -> datetime:
-    """Force UTC timezone for date."""
+def convert_tz_to_utc(date: datetime) -> datetime:
+    """Convert the timezone of the given datetime object to UTC."""
     return date.astimezone(UTC) if date.tzinfo is not UTC else date
 
 
-# A pydantic type for values that should have an UTC timezone.
-# This behaves exactly like the normal datetime type, but requires that the value
-# has a timezone and converts the timezone to UTC if necessary.
-# Validation and timezone conversion is only done via pydantic. Direct use of DateTimeUTC
-# is identical to normal datetime.
-DateTimeUTC = Annotated[
+# A Pydantic type for values that should have an UTC timezone.
+# This behaves exactly like the normal datetime type, but requires a
+# a timezone aware object which is converted to UTC if necessary.
+# Validation and timezone conversion is only done via Pydantic.
+# Direct use of DateTimeUTC is identical to normal datetime.
+UTCDatetime = Annotated[
     datetime,
-    BeforeValidator(set_tz_to_utc),
+    # note that BeforeValidators run right-to-left
+    BeforeValidator(convert_tz_to_utc),
     BeforeValidator(TypeAdapter(AwareDatetime).validate_python),
 ]
 
 
-def construct_datetime_utc(*args, **kwargs) -> DateTimeUTC:
+def utc_datetime(*args, **kwargs) -> UTCDatetime:
     """Construct a datetime with UTC timezone."""
     if kwargs.get("tzinfo") is None:
         kwargs["tzinfo"] = UTC
-    return DateTimeUTC(*args, **kwargs)
+    return UTCDatetime(*args, **kwargs)
 
 
-def now_as_utc() -> DateTimeUTC:
+def now_as_utc() -> UTCDatetime:
     """Return the current datetime with UTC timezone.
 
     Note: This is different from datetime.utcnow() which has no timezone.
     """
-    return DateTimeUTC.now(UTC)
+    return UTCDatetime.now(UTC)

@@ -23,9 +23,9 @@ from pytest import mark, raises
 
 from ghga_service_commons.utils.utc_dates import (
     UTC,
-    DateTimeUTC,
-    construct_datetime_utc,
+    UTCDatetime,
     now_as_utc,
+    utc_datetime,
 )
 
 
@@ -46,7 +46,7 @@ def test_does_not_accept_naive_datetimes(value):
     class Model(BaseModel):
         """Test model."""
 
-        d: DateTimeUTC
+        d: UTCDatetime
 
     with raises(ValueError):
         Model(d=value)
@@ -63,13 +63,13 @@ def test_does_not_accept_naive_datetimes(value):
     ],
 )
 def test_accept_aware_datetimes_in_utc(value):
-    """Test that DateTimeUTC does not accepts timezone aware UTC datetimes."""
+    """Test that DateTimeUTC accepts timezone aware UTC datetimes."""
 
     class Model(BaseModel):
         """Test model."""
 
         dt: datetime
-        du: DateTimeUTC
+        du: UTCDatetime
 
     model = Model(dt=value, du=value)
 
@@ -92,7 +92,7 @@ def test_converts_datetimes_to_utc(value):
         """Test model."""
 
         dt: datetime
-        du: DateTimeUTC
+        du: UTCDatetime
 
     model = Model(dt=value, du=value)
 
@@ -107,11 +107,11 @@ def test_converts_datetimes_to_utc(value):
 
 def test_datetime_utc_constructor():
     """Test the constructor for DateTimeUTC values."""
-    date = construct_datetime_utc(2022, 11, 15, 12, 0, 0)
+    date = utc_datetime(2022, 11, 15, 12, 0, 0)
     assert date.tzinfo is UTC
     assert date.utcoffset() == timedelta(0)
 
-    date = construct_datetime_utc(2022, 11, 15, 12, 0, 0, tzinfo=UTC)
+    date = utc_datetime(2022, 11, 15, 12, 0, 0, tzinfo=UTC)
     assert date.tzinfo is UTC
     assert date.utcoffset() == timedelta(0)
 
@@ -131,6 +131,6 @@ def test_datetime_utc_in_pydantic_json_schema():
     class Model(BaseModel):
         """Test model."""
 
-        test: DateTimeUTC
+        test: UTCDatetime
 
     Model.model_json_schema()
