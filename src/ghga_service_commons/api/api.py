@@ -160,12 +160,12 @@ def get_validated_correlation_id(
     """Returns valid correlation ID.
 
     If `correlation_id` is valid, it returns that.
-    If it is non-empty and invalid, an error is raised.
     If it is empty and `generate_correlation_id` is True, a new value is generated.
     Otherwise, an error is raised.
 
     Raises:
-        InvalidCorrelationIdError: If a correlation ID is empty or invalid.
+        InvalidCorrelationIdError: If a correlation ID is invalid or empty (and
+            `generate_correlation_id` is False).
     """
     try:
         validate_correlation_id(correlation_id)
@@ -187,9 +187,8 @@ async def correlation_id_middleware(
     Set the correlation ID ContextVar before passing on the request.
 
     Raises:
-        InvalidCorrelationIdError: If a correlation ID exists and is invalid.
-        MissingCorrelationIdError: If correlation_id is empty and generate_correlation_id
-            is not configured to True.
+        InvalidCorrelationIdError: If a correlation ID is invalid or empty (and
+            `generate_correlation_id` is False).
     """
     correlation_id = request.headers.get(CORRELATION_ID_HEADER_NAME, "")
 
