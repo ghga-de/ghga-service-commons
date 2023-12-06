@@ -188,7 +188,7 @@ async def correlation_id_middleware(
     """
     correlation_id = request.headers.get(CORRELATION_ID_HEADER_NAME, "")
 
-    # If a correlation ID exists, validate it. If not, generate a new one.
+    # Validate the correlation ID. If validation fails, return a Response with status 400.
     try:
         validated_correlation_id = get_validated_correlation_id(
             correlation_id, generate_correlation_id
