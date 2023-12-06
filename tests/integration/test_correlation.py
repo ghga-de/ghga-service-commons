@@ -15,11 +15,9 @@
 #
 
 """Test the correlation ID middleware."""
-from contextlib import nullcontext
 
 import pytest
 from fastapi import FastAPI
-from hexkit.correlation import InvalidCorrelationIdError
 
 from ghga_service_commons.api.api import (
     CORRELATION_ID_HEADER_NAME,
@@ -32,29 +30,34 @@ VALID_CORRELATION_ID = "5deb0e61-5058-4e96-92d4-0529d045832e"
 
 
 @pytest.mark.parametrize(
-    "preset_id,generate_correlation_id,exception",
+    "preset_id,generate_correlation_id,status_code",
     [
-        (VALID_CORRELATION_ID, False, None),  # happy path
-        (VALID_CORRELATION_ID, True, None),  # also fine
-        ("invalid", False, InvalidCorrelationIdError),  # error for bad cid header
-        ("invalid", True, InvalidCorrelationIdError),  # the generate flag is irrelevant
-        ("", False, InvalidCorrelationIdError),  # error for empty string cid header
-        ("", True, None),  # empty string with generate flag is fine
+        (VALID_CORRELATION_ID, False, 200),  # happy path
+        (VALID_CORRELATION_ID, True, 200),  # also fine
+        ("invalid", False, 400),  # error for bad cid header
+        ("invalid", True, 400),  # the generate flag is irrelevant
+        ("", False, 400),  # No error for empty string cid header
+        ("", True, 200),  # empty string with generate flag is fine
     ],
 )
 @pytest.mark.asyncio
 async def test_middleware(
     preset_id: str,
     generate_correlation_id: bool,
-    exception,
+    status_code: int,
 ):
-    """Test that the right errors are raised for varying conditions in the middleware."""
+    """Test that the InvalidCorrelationIdErrors are returned as 400 status-code responses."""
     app = FastAPI()
 
     config = ApiConfigBase(generate_correlation_id=generate_correlation_id)  # type: ignore
     config.port = get_free_port()
     configure_app(app, config)
 
+    app.get("/")(lambda: "some response")  # dummy endpoint to get a 200 status code
+
     async with AsyncTestClient(app=app) as rest_client:
-        with pytest.raises(exception) if exception else nullcontext():
-            await rest_client.get("/", headers={CORRELATION_ID_HEADER_NAME: preset_id})
+        response = await rest_client.get(
+            "/", headers={CORRELATION_ID_HEADER_NAME: preset_id}
+        )
+
+        assert response.status_code == status_code

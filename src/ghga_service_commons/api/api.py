@@ -25,7 +25,7 @@ from functools import partial
 from typing import Literal, Optional, Union
 
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from hexkit.correlation import (
     InvalidCorrelationIdError,
@@ -193,9 +193,15 @@ async def correlation_id_middleware(
     correlation_id = request.headers.get(CORRELATION_ID_HEADER_NAME, "")
 
     # If a correlation ID exists, validate it. If not, generate a new one.
-    validated_correlation_id = get_validated_correlation_id(
-        correlation_id, generate_correlation_id
-    )
+    try:
+        validated_correlation_id = get_validated_correlation_id(
+            correlation_id, generate_correlation_id
+        )
+    except InvalidCorrelationIdError:
+        return Response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content="Correlation ID missing or invalid.",
+        )
 
     # Update header if the validated value differs
     if validate_correlation_id != correlation_id:
