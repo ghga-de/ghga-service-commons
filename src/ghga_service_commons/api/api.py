@@ -46,7 +46,7 @@ CORRELATION_ID_HEADER_NAME = "X-Correlation-ID"
 # type alias for log level parameter
 LogLevel = Literal["critical", "error", "warning", "info", "debug", "trace"]
 
-log = logging.getLogger()
+log = logging.getLogger("api")
 
 
 class ApiConfigBase(BaseSettings):
@@ -138,8 +138,8 @@ class ApiConfigBase(BaseSettings):
         examples=[True, False],
         description=(
             "A flag, which, if False, will result in an error when inbound requests don't"
-            + "possess a correlation ID. If True, requests without a correlation ID will"
-            + "be assigned a newly generated ID in the correlation ID middleware function."
+            + " possess a correlation ID. If True, requests without a correlation ID will"
+            + " be assigned a newly generated ID in the correlation ID middleware function."
         ),
     )
 
@@ -167,15 +167,11 @@ def get_validated_correlation_id(
         InvalidCorrelationIdError: If a correlation ID is invalid or empty (and
             `generate_correlation_id` is False).
     """
-    try:
+    if not correlation_id and generate_correlation_id:
+        correlation_id = new_correlation_id()
+        log.info("Generated new correlation id: %s", correlation_id)
+    else:
         validate_correlation_id(correlation_id)
-    except InvalidCorrelationIdError:
-        if generate_correlation_id and not correlation_id:
-            correlation_id = new_correlation_id()
-            log.info("Generated new correlation id: %s", correlation_id)
-        else:
-            raise
-
     return correlation_id
 
 

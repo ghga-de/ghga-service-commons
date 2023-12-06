@@ -24,7 +24,7 @@ from ghga_service_commons.api.api import (
     ApiConfigBase,
     configure_app,
 )
-from ghga_service_commons.api.testing import AsyncTestClient, get_free_port
+from ghga_service_commons.api.testing import AsyncTestClient
 
 VALID_CORRELATION_ID = "5deb0e61-5058-4e96-92d4-0529d045832e"
 
@@ -50,7 +50,6 @@ async def test_middleware(
     app = FastAPI()
 
     config = ApiConfigBase(generate_correlation_id=generate_correlation_id)  # type: ignore
-    config.port = get_free_port()
     configure_app(app, config)
 
     app.get("/")(lambda: "some response")  # dummy endpoint to get a 200 status code
