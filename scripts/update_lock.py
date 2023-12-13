@@ -144,7 +144,6 @@ def compile_lock_file(
     command = [
         "pip-compile",
         "--rebuild",
-        "--generate-hashes",
         "--annotate",
     ]
 
