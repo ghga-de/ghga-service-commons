@@ -22,7 +22,7 @@ RESTful webapps with FastAPI.
 import logging
 from collections.abc import Sequence
 from functools import partial
-from typing import Literal, Optional, Union
+from typing import Optional, Union
 
 import uvicorn
 from fastapi import FastAPI, Request, Response, status
@@ -43,10 +43,8 @@ from ghga_service_commons.httpyexpect.server.handlers.fastapi_ import (
 
 CORRELATION_ID_HEADER_NAME = "X-Correlation-ID"
 
-# type alias for log level parameter
-LogLevel = Literal["critical", "error", "warning", "info", "debug", "trace"]
 
-log = logging.getLogger("api")
+log = logging.getLogger(__name__)
 
 
 class ApiConfigBase(BaseSettings):
@@ -59,9 +57,6 @@ class ApiConfigBase(BaseSettings):
     host: str = Field("127.0.0.1", description="IP of the host.")
     port: int = Field(
         8080, description="Port to expose the server on the specified host"
-    )
-    log_level: LogLevel = Field(
-        "info", description="Controls the verbosity of the log."
     )
     auto_reload: bool = Field(
         False,
@@ -140,6 +135,13 @@ class ApiConfigBase(BaseSettings):
             "A flag, which, if False, will result in an error when inbound requests don't"
             + " possess a correlation ID. If True, requests without a correlation ID will"
             + " be assigned a newly generated ID in the correlation ID middleware function."
+        ),
+    )
+    override_uvicorn_logs: bool = Field(
+        default=True,
+        description=(
+            "If True, uvicorn's default logging configuration will be overridden so the"
+            + " formatting is controlled by the root logger."
         ),
     )
 
@@ -254,16 +256,35 @@ async def run_server(app: Union[FastAPI, str], config: ApiConfigBase):
             (see here for an example:
             from ghga_service_commons.api import run_server).
         config:
-            A pydantic BaseSettings class that contains attributes
-            "host", "port", and "log_level".
+            A pydantic BaseSettings class that contains attributes "host" and "port".
     """
-    uv_config = uvicorn.Config(
-        app=app,
-        host=config.host,
-        port=config.port,
-        log_level=config.log_level,
-        reload=config.auto_reload,
-        workers=config.workers,
-    )
+    log_config = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "loggers": {
+            "uvicorn": {},
+            "uvicorn.error": {},
+            "uvicorn.access": {},
+        },
+    }
+
+    if config.override_uvicorn_logs:
+        uv_config = uvicorn.Config(
+            app=app,
+            host=config.host,
+            port=config.port,
+            log_config=log_config,
+            reload=config.auto_reload,
+            workers=config.workers,
+        )
+    else:
+        uv_config = uvicorn.Config(
+            app=app,
+            host=config.host,
+            port=config.port,
+            reload=config.auto_reload,
+            workers=config.workers,
+        )
+
     server = uvicorn.Server(uv_config)
     await server.serve()

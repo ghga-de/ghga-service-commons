@@ -19,7 +19,6 @@
 
 from ghga_service_commons.api.api import (  # noqa: F401
     ApiConfigBase,
-    LogLevel,
     configure_app,
     run_server,
 )
