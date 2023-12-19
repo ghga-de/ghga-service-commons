@@ -13,25 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+"""A collection of dependency dummies that are used in view definitions but need to be
+replaced at runtime by actual dependencies.
+"""
 
-"""Implement global logic for running the application."""
+from typing import Annotated
 
-import asyncio
+from fastapi import Depends
 
-from ghga_auth.config import Config
-from ghga_auth.inject import prepare_rest_app
-from ghga_service_commons.api import run_server
-from ghga_service_commons.utils.utc_dates import assert_tz_is_utc
+from ghga_service_commons.api.di import DependencyDummy
+from ghga_service_commons.auth.context import AuthContextProtocol
+from ghga_service_commons.auth.ghga import AuthContext
 
-
-async def configure_and_run_server():
-    """Run the HTTP API."""
-    config = Config()  # pyright: ignore
-    async with prepare_rest_app(config=config) as app:
-        await run_server(app=app, config=config)
-
-
-def run():
-    """Main entry point for running the server."""
-    assert_tz_is_utc()
-    asyncio.run(configure_and_run_server())
+auth_provider_dummy = DependencyDummy("auth_provider")
+AuthProviderDummy = Annotated[
+    AuthContextProtocol[AuthContext], Depends(auth_provider_dummy)
+]
