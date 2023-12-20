@@ -137,13 +137,6 @@ class ApiConfigBase(BaseSettings):
             + " be assigned a newly generated ID in the correlation ID middleware function."
         ),
     )
-    override_uvicorn_logs: bool = Field(
-        default=True,
-        description=(
-            "If True, uvicorn's default logging configuration will be overridden so the"
-            + " formatting is controlled by the root logger."
-        ),
-    )
 
 
 def set_header_correlation_id(request: Request, correlation_id: str):
@@ -258,33 +251,14 @@ async def run_server(app: Union[FastAPI, str], config: ApiConfigBase):
         config:
             A pydantic BaseSettings class that contains attributes "host" and "port".
     """
-    log_config = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "loggers": {
-            "uvicorn": {},
-            "uvicorn.error": {},
-            "uvicorn.access": {},
-        },
-    }
-
-    if config.override_uvicorn_logs:
-        uv_config = uvicorn.Config(
-            app=app,
-            host=config.host,
-            port=config.port,
-            log_config=log_config,
-            reload=config.auto_reload,
-            workers=config.workers,
-        )
-    else:
-        uv_config = uvicorn.Config(
-            app=app,
-            host=config.host,
-            port=config.port,
-            reload=config.auto_reload,
-            workers=config.workers,
-        )
+    uv_config = uvicorn.Config(
+        app=app,
+        host=config.host,
+        port=config.port,
+        log_config=None,
+        reload=config.auto_reload,
+        workers=config.workers,
+    )
 
     server = uvicorn.Server(uv_config)
     await server.serve()
