@@ -29,7 +29,7 @@ from ghga_service_commons.utils.context import asyncnullcontext
 
 
 @asynccontextmanager
-async def prepare_core(
+async def prepare_auth_provider(
     *,
     config: Config,
 ) -> AsyncGenerator[AuthContextProtocol[AuthContext], None]:
@@ -40,7 +40,7 @@ async def prepare_core(
         yield auth_provider
 
 
-def prepare_core_with_override(
+def prepare_auth_with_override(
     *,
     config: Config,
     auth_provider_override: Optional[AuthContextProtocol[AuthContext]] = None,
@@ -50,7 +50,7 @@ def prepare_core_with_override(
     return (
         asyncnullcontext(auth_provider_override)
         if auth_provider_override
-        else prepare_core(config=config)
+        else prepare_auth_provider(config=config)
     )
 
 
@@ -67,7 +67,7 @@ async def prepare_rest_app(
     """
     app = get_configured_app(config=config)
 
-    async with prepare_core_with_override(
+    async with prepare_auth_with_override(
         config=config, auth_provider_override=auth_provider_override
     ) as auth_provider:
         app.dependency_overrides[dummies.auth_provider_dummy] = lambda: auth_provider
