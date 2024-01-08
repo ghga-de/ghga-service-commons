@@ -82,7 +82,7 @@ async def test_uvicorn_log_format(capsys):
     err = capsys.readouterr()[1].strip()
 
     # Get list of the different log messages
-    assert err != ""
+    assert err
     msgs = err.split("\n")
 
     for msg in msgs:
