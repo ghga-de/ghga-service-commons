@@ -86,7 +86,7 @@ async def test_uvicorn_log_format(capsys):
     msgs = err.split("\n")
 
     for msg in msgs:
-        # all logs should be json string, something is wrong if not
+        # all logs should be json strings, something is wrong if not
         json_msg = json.loads(msg)
         if json_msg["name"].startswith("uvicorn"):
             # verify all expected fields exist and that all existing fields are expected
