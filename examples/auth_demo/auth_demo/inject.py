@@ -89,8 +89,8 @@ async def prepare_rest_app(
 ):
     """Construct and initialize an REST API app along with all its dependencies.
 
-    By default, the core dependencies are automatically prepared but you can also
-    provide them using the auth_provider_override parameter.
+    By default, the core and auth dependencies are automatically prepared but you can also
+    provide them using the override parameters.
     """
     app = get_configured_app(config=config)
 
