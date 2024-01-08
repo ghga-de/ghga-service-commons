@@ -16,7 +16,7 @@
 
 """Dependency injection logic"""
 
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import Generator
 from contextlib import asynccontextmanager, contextmanager, nullcontext
 from typing import Optional
 
@@ -29,32 +29,6 @@ from auth_demo.router_config import get_configured_app
 from ghga_service_commons.auth.context import AuthContextProtocol
 from ghga_service_commons.auth.jwt_auth import JWTAuthContextProvider
 from ghga_service_commons.utils.context import asyncnullcontext
-
-
-@asynccontextmanager
-async def prepare_auth_provider(
-    *,
-    config: Config,
-) -> AsyncGenerator[AuthContextProtocol[DemoAuthContext], None]:
-    """Constructs and initializes all core components and their outbound dependencies."""
-    async with JWTAuthContextProvider.construct(
-        config=config, context_class=DemoAuthContext
-    ) as auth_provider:
-        yield auth_provider
-
-
-def prepare_auth_with_override(
-    *,
-    config: Config,
-    auth_provider_override: Optional[AuthContextProtocol[DemoAuthContext]] = None,
-):
-    """Resolve the auth_provider context manager based on config and override (if any)."""
-
-    return (
-        asyncnullcontext(auth_provider_override)
-        if auth_provider_override
-        else prepare_auth_provider(config=config)
-    )
 
 
 @contextmanager
@@ -94,8 +68,13 @@ async def prepare_rest_app(
     """
     app = get_configured_app(config=config)
 
-    async with prepare_auth_with_override(
-        config=config, auth_provider_override=auth_provider_override
+    async with (
+        asyncnullcontext(auth_provider_override)
+        if auth_provider_override
+        else JWTAuthContextProvider.construct(
+            config=config,
+            context_class=DemoAuthContext,
+        )
     ) as auth_provider:
         with prepare_core_with_override(
             config=config, hangout_override=hangout_override

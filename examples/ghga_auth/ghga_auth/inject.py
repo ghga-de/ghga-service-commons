@@ -16,7 +16,6 @@
 
 """Dependency injection logic"""
 
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Optional
 
@@ -26,32 +25,6 @@ from ghga_auth.router_config import get_configured_app
 from ghga_service_commons.auth.context import AuthContextProtocol
 from ghga_service_commons.auth.ghga import AuthContext, GHGAAuthContextProvider
 from ghga_service_commons.utils.context import asyncnullcontext
-
-
-@asynccontextmanager
-async def prepare_auth_provider(
-    *,
-    config: Config,
-) -> AsyncGenerator[AuthContextProtocol[AuthContext], None]:
-    """Constructs and initializes all core components and their outbound dependencies."""
-    async with GHGAAuthContextProvider.construct(
-        config=config, context_class=AuthContext
-    ) as auth_provider:
-        yield auth_provider
-
-
-def prepare_auth_with_override(
-    *,
-    config: Config,
-    auth_provider_override: Optional[AuthContextProtocol[AuthContext]] = None,
-):
-    """Resolve the auth_provider context manager based on config and override (if any)."""
-
-    return (
-        asyncnullcontext(auth_provider_override)
-        if auth_provider_override
-        else prepare_auth_provider(config=config)
-    )
 
 
 @asynccontextmanager
@@ -67,8 +40,13 @@ async def prepare_rest_app(
     """
     app = get_configured_app(config=config)
 
-    async with prepare_auth_with_override(
-        config=config, auth_provider_override=auth_provider_override
+    async with (
+        asyncnullcontext(auth_provider_override)
+        if auth_provider_override
+        else GHGAAuthContextProvider.construct(
+            config=config,
+            context_class=AuthContext,
+        )
     ) as auth_provider:
         app.dependency_overrides[dummies.auth_provider_dummy] = lambda: auth_provider
         yield app
