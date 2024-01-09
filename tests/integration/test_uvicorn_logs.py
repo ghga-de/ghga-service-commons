@@ -13,22 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Isolated test for uvicorn that spins up the server and verifies the log output.
-
-There is a modified version of run_server that ensures the server shuts down gracefully
-when cancelling the task.
-"""
+"""Isolated test for uvicorn that spins up the server and verifies the log output."""
 import asyncio
 import json
 from contextlib import suppress
-from typing import Union
 
 import pytest
-import uvicorn
 from fastapi import FastAPI
 from hexkit.log import LoggingConfig, configure_logging
 
-from ghga_service_commons.api.api import ApiConfigBase, configure_app
+from ghga_service_commons.api.api import ApiConfigBase, configure_app, run_server
 
 EXPECTED_FIELDS = {
     "timestamp",
@@ -40,24 +34,6 @@ EXPECTED_FIELDS = {
     "message",
     "details",
 }
-
-
-async def run_server_with_shutdown(app: Union[FastAPI, str], config: ApiConfigBase):
-    """Copy of `run_server()` that allows server to shutdown if task is cancelled."""
-    uv_config = uvicorn.Config(
-        app=app,
-        host=config.host,
-        port=config.port,
-        log_config=None,
-        reload=config.auto_reload,
-        workers=config.workers,
-    )
-
-    server = uvicorn.Server(uv_config)
-    try:
-        await server.serve()
-    except asyncio.CancelledError:
-        await server.shutdown()
 
 
 @pytest.mark.asyncio
@@ -74,7 +50,7 @@ async def test_uvicorn_log_format(capsys):
 
     # Run the server just long enough to start up and generate initial uvicorn logs
     loop = asyncio.get_event_loop()
-    task = loop.create_task(run_server_with_shutdown(app=test_app, config=config))
+    task = loop.create_task(run_server(app=test_app, config=config))
     with suppress(asyncio.TimeoutError):
         await asyncio.wait_for(task, timeout=2)
 

@@ -18,7 +18,7 @@
 Contains functionality for initializing, configuring, and running
 RESTful webapps with FastAPI.
 """
-
+import asyncio
 import logging
 from collections.abc import Sequence
 from functools import partial
@@ -261,4 +261,9 @@ async def run_server(app: Union[FastAPI, str], config: ApiConfigBase):
     )
 
     server = uvicorn.Server(uv_config)
-    await server.serve()
+    try:
+        await server.serve()
+    except asyncio.CancelledError:
+        if server.started:
+            await server.shutdown()
+        raise
