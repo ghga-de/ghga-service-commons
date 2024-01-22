@@ -61,7 +61,7 @@ def test_has_role():
 def test_create_auth_config():
     """Test that a GHGA auth config can be crated."""
     auth_key = generate_jwk().export(private_key=False)
-    config = AuthConfig(auth_key=auth_key)  # type: ignore
+    config = AuthConfig(auth_key=auth_key)  # pyright: ignore
     assert config.auth_algs == ["ES256"]
     assert config.auth_check_claims == {
         "name": None,
