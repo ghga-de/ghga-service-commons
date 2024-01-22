@@ -20,7 +20,7 @@ See the router.py module for how to use these policies in REST endpoints.
 """
 
 from functools import partial
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import Depends, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -32,7 +32,7 @@ from ghga_service_commons.auth.policies import (
     require_auth_context_using_credentials,
 )
 
-__all__ = ["AuthContext", "get_auth", "require_admin", "require_auth"]
+__all__ = ["OptionalAuthContext", "UserAuthContext", "AdminAuthContext"]
 
 
 async def get_auth_context(
@@ -65,10 +65,10 @@ async def require_admin_context(
 
 
 # policy for getting an auth context without requiring its existence
-get_auth = Security(get_auth_context)
+OptionalAuthContext = Annotated[Optional[AuthContext], Security(get_auth_context)]
 
 # policy for requiring and getting an auth context
-require_auth = Security(require_auth_context)
+UserAuthContext = Annotated[AuthContext, Security(require_auth_context)]
 
 # policy fo requiring and getting an auth context with admin role
-require_admin = Security(require_admin_context)
+AdminAuthContext = Annotated[AuthContext, Security(require_admin_context)]
