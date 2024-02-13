@@ -53,7 +53,7 @@ async def test_middleware(
     configure_app(app, config)
 
     # dummy endpoint to get a 200 status code
-    app.get("/")(lambda: {"status_code": 200, "detail": "some response"})
+    app.get("/", status_code=200)(lambda: "some response")
 
     async with AsyncTestClient(app=app) as rest_client:
         response = await rest_client.get(
