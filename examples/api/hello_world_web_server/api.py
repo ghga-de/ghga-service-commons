@@ -21,7 +21,7 @@ from ghga_service_commons.api import configure_app
 
 from .config import get_config
 
-app = FastAPI(root_path="")
+app = FastAPI()
 configure_app(app, config=get_config())
 
 

@@ -27,7 +27,7 @@ dependencies = ["pydantic >=2, <3"]
 
 [project.optional-dependencies]
 api = [
-    "fastapi==0.109.0",
+    "fastapi>=0.109.2, <0.110",
     "uvicorn[standard]>=0.23.2, <0.24",
     "httpx>=0.25.1, <0.26",
     "ghga-service-commons[objectstorage]",
