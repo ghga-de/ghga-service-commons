@@ -59,7 +59,7 @@ async def test_middleware(
         app=app,
     ) as rest_client:
         response = await rest_client.get(
-            "", headers={CORRELATION_ID_HEADER_NAME: preset_id}
+            "/", headers={CORRELATION_ID_HEADER_NAME: preset_id}
         )
 
         assert response.status_code == status_code
