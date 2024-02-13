@@ -53,11 +53,13 @@ async def test_middleware(
     configure_app(app, config)
 
     # dummy endpoint to get a 200 status code
-    app.get("/health")(lambda: "some response")
+    @app.router.get("/")
+    def return_ok():
+        return "some response"
 
     async with AsyncTestClient(app=app) as rest_client:
         response = await rest_client.get(
-            "/health", headers={CORRELATION_ID_HEADER_NAME: preset_id}
+            "/", headers={CORRELATION_ID_HEADER_NAME: preset_id}
         )
 
         assert response.status_code == status_code
