@@ -47,15 +47,13 @@ async def test_middleware(
     status_code: int,
 ):
     """Test that the InvalidCorrelationIdErrors are returned as 400 status-code responses."""
-    app = FastAPI()
+    app = FastAPI(redirect_slashes=False)
 
     config = ApiConfigBase(generate_correlation_id=generate_correlation_id)  # type: ignore
     configure_app(app, config)
 
     # dummy endpoint to get a 200 status code
-    @app.router.get("/")
-    def return_ok():
-        return "some response"
+    app.get("/")(lambda: "some response")
 
     async with AsyncTestClient(app=app) as rest_client:
         response = await rest_client.get(
