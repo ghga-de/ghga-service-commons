@@ -55,9 +55,7 @@ async def test_middleware(
     # dummy endpoint to get a 200 status code
     app.get("/")(lambda: "some response")
 
-    async with AsyncTestClient(
-        app=app,
-    ) as rest_client:
+    async with AsyncTestClient(app=app) as rest_client:
         response = await rest_client.get(
             "/", headers={CORRELATION_ID_HEADER_NAME: preset_id}
         )
