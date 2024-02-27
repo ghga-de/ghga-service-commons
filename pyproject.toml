@@ -4,14 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ghga_service_commons"
-version = "3.0.3"
+version = "3.1.0"
 description = "A library that contains common functionality used in services of GHGA"
 readme = "README.md"
 authors = [
     { name = "German Human Genome Phenome Archive (GHGA)", email = "contact@ghga.de" },
 ]
 requires-python = ">=3.9"
-license = { text = "Apache 2.0" }
 classifiers = [
     "Development Status :: 1 - Planning",
     "Operating System :: POSIX :: Linux",
@@ -37,6 +36,9 @@ dev = ["requests>=2.31.0, <3"]
 objectstorage = ["hexkit>=2, <3"]
 
 all = ["ghga-service-commons[api,auth,crypt,dev,objectstorage]"]
+
+[project.license]
+text = "Apache 2.0"
 
 [project.urls]
 Repository = "https://github.com/ghga-de/ghga-service-commons"
@@ -88,11 +90,30 @@ select = [
 max-complexity = 10
 
 [tool.ruff.lint.per-file-ignores]
-"scripts/*" = ["PL", "S", "SIM", "D"]
-"tests/*" = ["S", "SIM", "PLR"]
-".devcontainer/*" = ["S", "SIM", "D"]
-"examples/*" = ["S", "D"]
-"__init__.py" = ["D"]
+"scripts/*" = [
+    "PL",
+    "S",
+    "SIM",
+    "D",
+]
+"tests/*" = [
+    "S",
+    "SIM",
+    "PLR",
+    "B011",
+]
+".devcontainer/*" = [
+    "S",
+    "SIM",
+    "D",
+]
+"examples/*" = [
+    "S",
+    "D",
+]
+"__init__.py" = [
+    "D",
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
@@ -109,3 +130,10 @@ no_site_packages = false
 [tool.pytest.ini_options]
 minversion = "7.4"
 asyncio_mode = "strict"
+
+[tool.coverage.paths]
+source = [
+    "src",
+    "/workspace/src",
+    "**/lib/python*/site-packages",
+]
