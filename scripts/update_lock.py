@@ -23,17 +23,15 @@
 import os
 import re
 import subprocess
-from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import stringcase
-import tomli
 import tomli_w
 
-from script_utils import cli
+from script_utils import cli, deps
 
 REPO_ROOT_DIR = Path(__file__).parent.parent.resolve()
+LOCK_DIR = REPO_ROOT_DIR / "lock"
 
 PYPROJECT_TOML_PATH = REPO_ROOT_DIR / "pyproject.toml"
 DEV_DEPS_PATH = REPO_ROOT_DIR / "requirements-dev.in"
@@ -74,11 +72,11 @@ def remove_self_dependencies(pyproject: dict) -> dict:
 
     if "optional-dependencies" in project_metadata:
         for group in project_metadata["optional-dependencies"]:
-            project_metadata["optional-dependencies"][group] = (
-                exclude_from_dependency_list(
-                    package_name=package_name,
-                    dependencies=project_metadata["optional-dependencies"][group],
-                )
+            project_metadata["optional-dependencies"][
+                group
+            ] = exclude_from_dependency_list(
+                package_name=package_name,
+                dependencies=project_metadata["optional-dependencies"][group],
             )
 
     return modified_pyproject
@@ -203,10 +201,7 @@ def main(upgrade: bool = False, check: bool = False):
     if check:
         ensure_lock_files_exist()
 
-    with open(PYPROJECT_TOML_PATH, "rb") as pyproject_toml:
-        pyproject = tomli.load(pyproject_toml)
-
-    modified_pyproject = remove_self_dependencies(pyproject)
+    modified_pyproject = deps.get_modified_pyproject(PYPROJECT_TOML_PATH)
 
     extras = (
         "optional-dependencies" in modified_pyproject["project"]
