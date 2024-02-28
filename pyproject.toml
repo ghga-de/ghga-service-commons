@@ -1,11 +1,14 @@
 [build-system]
+<<<<<<< HEAD
 requires = ["setuptools>=69"]
+=======
+requires = [
+    "setuptools>=67.7.2",
+]
+>>>>>>> 500a828 (Slight update from template)
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ghga_service_commons"
-version = "3.1.0"
-description = "A library that contains common functionality used in services of GHGA"
 readme = "README.md"
 authors = [
     { name = "German Human Genome Phenome Archive (GHGA)", email = "contact@ghga.de" },
@@ -22,7 +25,15 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Intended Audience :: Developers",
 ]
-dependencies = ["pydantic >=2, <3"]
+name = "ghga_service_commons"
+version = "3.1.0"
+description = "A library that contains common functionality used in services of GHGA"
+dependencies = [
+    "pydantic >=2, <3",
+]
+
+[project.license]
+text = "Apache 2.0"
 
 [project.optional-dependencies]
 api = [

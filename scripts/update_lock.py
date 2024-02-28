@@ -34,52 +34,9 @@ REPO_ROOT_DIR = Path(__file__).parent.parent.resolve()
 LOCK_DIR = REPO_ROOT_DIR / "lock"
 
 PYPROJECT_TOML_PATH = REPO_ROOT_DIR / "pyproject.toml"
-DEV_DEPS_PATH = REPO_ROOT_DIR / "requirements-dev.in"
-OUTPUT_LOCK_PATH = REPO_ROOT_DIR / "requirements.txt"
-OUTPUT_DEV_LOCK_PATH = REPO_ROOT_DIR / "requirements-dev.txt"
-
-
-def exclude_from_dependency_list(*, package_name: str, dependencies: list) -> list:
-    """Exclude the specified package from the provided dependency list."""
-
-    return [
-        dependency
-        for dependency in dependencies
-        if not dependency.startswith(package_name)
-    ]
-
-
-def remove_self_dependencies(pyproject: dict) -> dict:
-    """Filter out self dependencies (dependencies of the package on it self) from the
-    dependencies and optional-dependencies in the provided pyproject metadata."""
-
-    if "project" not in pyproject:
-        return pyproject
-
-    modified_pyproject = deepcopy(pyproject)
-
-    project_metadata = modified_pyproject["project"]
-
-    package_name = stringcase.spinalcase(project_metadata.get("name"))
-
-    if not package_name:
-        raise ValueError("The provided project metadata does not contain a name.")
-
-    if "dependencies" in project_metadata:
-        project_metadata["dependencies"] = exclude_from_dependency_list(
-            package_name=package_name, dependencies=project_metadata["dependencies"]
-        )
-
-    if "optional-dependencies" in project_metadata:
-        for group in project_metadata["optional-dependencies"]:
-            project_metadata["optional-dependencies"][
-                group
-            ] = exclude_from_dependency_list(
-                package_name=package_name,
-                dependencies=project_metadata["optional-dependencies"][group],
-            )
-
-    return modified_pyproject
+DEV_DEPS_PATH = LOCK_DIR / "requirements-dev.in"
+OUTPUT_LOCK_PATH = LOCK_DIR / "requirements.txt"
+OUTPUT_DEV_LOCK_PATH = LOCK_DIR / "requirements-dev.txt"
 
 
 def fix_temp_dir_comments(file_path: Path):
