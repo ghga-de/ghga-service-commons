@@ -45,11 +45,13 @@ def big_temp_file(size: int) -> Generator[NamedBinaryIO, None, None]:
     next_number = 1
     with NamedTemporaryFile("w+b") as temp_file:
         while current_size <= size:
-            byte_addition = f"{current_number}".encode("ASCII")
+            byte_addition = f"{current_number}\n".encode("ASCII")
             current_size += len(byte_addition)
+            temp_file.write(byte_addition)
             previous_number = current_number
-            current_number = min(max_size, next_number)
-            next_number = min(max_size, previous_number + current_number)
+            current_number = next_number
+            next_number = previous_number + current_number
 
+        temp_file.flush()
         sys.set_int_max_str_digits(original_max)
         yield cast(NamedBinaryIO, temp_file)

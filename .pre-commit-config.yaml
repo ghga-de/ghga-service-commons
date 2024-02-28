@@ -4,7 +4,7 @@
 default_language_version:
   python: python3.9
 
-minimum_pre_commit_version: 3.6.0
+minimum_pre_commit_version: 3.0.0
 
 repos:
   - repo: local
@@ -13,6 +13,7 @@ repos:
         name: "ensure hooks are up to date"
         language: python
         additional_dependencies:
+          - "packaging"
           - "typer"
         fail_fast: true
         always_run: true
