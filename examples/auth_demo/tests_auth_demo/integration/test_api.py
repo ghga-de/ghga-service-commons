@@ -28,7 +28,7 @@ from ghga_service_commons.api.testing import AsyncTestClient
 
 async def get_app() -> FastAPI:
     """Get the demo app."""
-    config = Config()  # pyright: ignore
+    config = Config()  # type: ignore
     async with prepare_rest_app(config=config) as app:
         return app
 
