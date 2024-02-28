@@ -153,9 +153,10 @@ def generate_keypair() -> Crypt4GHKeyPair:
 
     # Crypt4GH does not reset the umask it sets, so we need to deal with it
     original_umask = os.umask(0o022)
-    c4gh.generate(seckey=sk_file, pubkey=pk_file)
+    passphrase = os.urandom(32).hex().encode()
+    c4gh.generate(seckey=sk_file, pubkey=pk_file, passphrase=passphrase)
     public_key = get_public_key(pk_path)
-    private_key = get_private_key(sk_path, lambda: None)
+    private_key = get_private_key(sk_path, lambda: passphrase.decode())
     os.umask(original_umask)
 
     Path(pk_path).unlink()

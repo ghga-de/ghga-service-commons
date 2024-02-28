@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-import random
+import sys
 from abc import ABC
 from collections.abc import Generator
 from contextlib import contextmanager
@@ -36,13 +36,20 @@ class NamedBinaryIO(ABC, BinaryIO):
 @contextmanager
 def big_temp_file(size: int) -> Generator[NamedBinaryIO, None, None]:
     """Generate a big file with approximately the specified size in bytes."""
+    max_size = 2**31 - 1
+    original_max = sys.get_int_max_str_digits()
+    sys.set_int_max_str_digits(max_size)
+
     current_size = 0
-    number = random.randint(0, 1_000_000_000_000)  # noqa: S311
+    current_number = 0
+    next_number = 1
     with NamedTemporaryFile("w+b") as temp_file:
         while current_size <= size:
-            byte_addition = f"{number}\n".encode("ASCII")
+            byte_addition = f"{current_number}".encode("ASCII")
             current_size += len(byte_addition)
-            temp_file.write(byte_addition)
-            number = random.randint(0, 1_000_000_000_000)  # noqa: S311
-        temp_file.flush()
+            previous_number = current_number
+            current_number = min(max_size, next_number)
+            next_number = min(max_size, previous_number + current_number)
+
+        sys.set_int_max_str_digits(original_max)
         yield cast(NamedBinaryIO, temp_file)

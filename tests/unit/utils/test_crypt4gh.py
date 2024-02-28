@@ -28,7 +28,7 @@ from ghga_service_commons.utils.crypt4gh import (
     random_encrypted_content,
 )
 
-FILE_SIZE = 20 * 1024**2
+FILE_SIZE = 64 * 1024**2
 
 
 def test_crypt4gh_utilities_bytes():
