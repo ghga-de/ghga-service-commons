@@ -74,11 +74,11 @@ def remove_self_dependencies(pyproject: dict) -> dict:
 
     if "optional-dependencies" in project_metadata:
         for group in project_metadata["optional-dependencies"]:
-            project_metadata["optional-dependencies"][
-                group
-            ] = exclude_from_dependency_list(
-                package_name=package_name,
-                dependencies=project_metadata["optional-dependencies"][group],
+            project_metadata["optional-dependencies"][group] = (
+                exclude_from_dependency_list(
+                    package_name=package_name,
+                    dependencies=project_metadata["optional-dependencies"][group],
+                )
             )
 
     return modified_pyproject
