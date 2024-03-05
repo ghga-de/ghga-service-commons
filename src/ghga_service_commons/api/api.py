@@ -82,7 +82,7 @@ class ApiConfigBase(BaseSettings):
         ),
     )
     docs_url: str = Field(
-        detault="/docs",
+        default="/docs",
         description=(
             "Path to host the swagger documentation."
             + " This is relative to the specified host and port."

@@ -41,7 +41,7 @@ EXPECTED_FIELDS = {
 async def test_uvicorn_log_format(capsys):
     """Verify that the uvicorn logs are formatted with the configured logging."""
     test_app = FastAPI()
-    config = ApiConfigBase()  # type: ignore
+    config = ApiConfigBase()
 
     configure_app(test_app, config)
 
