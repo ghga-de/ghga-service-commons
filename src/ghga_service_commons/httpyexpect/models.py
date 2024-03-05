@@ -46,15 +46,15 @@ class HttpExceptionBody(BaseModel):
             + " exception."
         ),
     )
-    exception_id: Annotated[
-        str, StringConstraints(pattern=EXCEPTION_ID_PATTERN)
-    ] = Field(
-        ...,
-        description=(
-            "An identifier used to distinguish between different exception"
-            + " causes in a preferably fine-grained fashion. The distinction between"
-            + " causes should be made from the perspective of the server/service"
-            + " raising the exception (and not from the client perspective). Needs to"
-            + " be camel case formatted and 3-40 character in length."
-        ),
+    exception_id: Annotated[str, StringConstraints(pattern=EXCEPTION_ID_PATTERN)] = (
+        Field(
+            ...,
+            description=(
+                "An identifier used to distinguish between different exception"
+                + " causes in a preferably fine-grained fashion. The distinction between"
+                + " causes should be made from the perspective of the server/service"
+                + " raising the exception (and not from the client perspective). Needs to"
+                + " be camel case formatted and 3-40 character in length."
+            ),
+        )
     )

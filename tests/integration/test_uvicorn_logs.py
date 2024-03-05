@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 """Isolated test for uvicorn that spins up the server and verifies the log output."""
+
 import asyncio
 import json
 from contextlib import suppress

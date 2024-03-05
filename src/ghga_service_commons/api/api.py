@@ -18,6 +18,7 @@
 Contains functionality for initializing, configuring, and running
 RESTful webapps with FastAPI.
 """
+
 import asyncio
 import logging
 from collections.abc import Sequence
