@@ -20,7 +20,7 @@ See the router.py module for how to use these policies in REST endpoints.
 """
 
 from functools import partial
-from typing import Annotated, Any, Optional, cast
+from typing import Annotated, Optional
 
 from fastapi import Depends, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -40,8 +40,8 @@ async def get_auth_context(
     credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False)),
 ) -> Optional[AuthContext]:
     """Get a GHGA authentication and authorization context using FastAPI."""
-    auth_provider = cast(Any, auth_provider)
-    return await get_auth_context_using_credentials(credentials, auth_provider)
+    context = await get_auth_context_using_credentials(credentials, auth_provider)
+    return context  # workaround mypy issue #12156
 
 
 async def require_auth_context(
