@@ -31,7 +31,7 @@ class HttpExceptionBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     data: dict[str, Any] = Field(
-        ...,
+        default=...,
         description=(
             "An object containing further details on the exception cause in a"
             + " machine readable way. All exceptions with the same exception_id should"
@@ -40,7 +40,7 @@ class HttpExceptionBody(BaseModel):
         ),
     )
     description: str = Field(
-        ...,
+        default=...,
         description=(
             "A human readable message to the client explaining the cause of the"
             + " exception."
