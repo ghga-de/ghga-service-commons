@@ -48,7 +48,7 @@ class HttpExceptionBody(BaseModel):
     )
     exception_id: Annotated[str, StringConstraints(pattern=EXCEPTION_ID_PATTERN)] = (
         Field(
-            ...,
+            default=...,
             description=(
                 "An identifier used to distinguish between different exception"
                 + " causes in a preferably fine-grained fashion. The distinction between"
