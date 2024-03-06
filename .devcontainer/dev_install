@@ -1,5 +1,5 @@
 #!/bin/bash
-# install service in dev container
+# install service library in dev container
 
 cd /workspace
 
