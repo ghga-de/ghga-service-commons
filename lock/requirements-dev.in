@@ -1,6 +1,6 @@
 # requirements for development and testing this library
 
 # common requirements for development and testing
--r requirements-dev-common.in
+-r requirements-dev-template.in
 
 # additional requirements can be listed here

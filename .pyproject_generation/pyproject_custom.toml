@@ -28,8 +28,8 @@ api = [
 ]
 auth = ["jwcrypto>=1.5.4, <2", "pydantic[email]>=2, <3"]
 crypt = ["pynacl>=1.5.0, <2", "crypt4gh>=1.6.0, <2"]
-dev = ["requests>=2.28.2, <3"]
-objectstorage = ["hexkit>=2.0.0, <3"]
+dev = ["requests>=2.31.0, <3"]
+objectstorage = ["hexkit>=2, <3"]
 
 all = ["ghga-service-commons[api,auth,crypt,dev,objectstorage]"]
 
