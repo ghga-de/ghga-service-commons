@@ -54,6 +54,14 @@ class RandomEncryptedData(NamedTuple):
     content: io.BytesIO
     decrypted_size: int
 
+    def __enter__(self):
+        """Nothing to set up, just return self"""
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        """Deal with open resources"""
+        self.close()
+
     def close(self):
         """Close in-memory BytesIO content."""
         self.content.close()
