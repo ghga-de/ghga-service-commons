@@ -1,0 +1,40 @@
+[project]
+name = "ghga_service_commons"
+version = "3.1.0"
+description = "A library that contains common functionality used in services of GHGA"
+readme = "README.md"
+authors = [
+    { name = "German Human Genome Phenome Archive (GHGA)", email = "contact@ghga.de" },
+]
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Software Development :: Libraries",
+    "Intended Audience :: Developers",
+]
+dependencies = ["pydantic >=2, <3"]
+
+[project.optional-dependencies]
+api = [
+    "fastapi>=0.110, <0.111",
+    "uvicorn[standard]>=0.27.1, <0.28",
+    "ghga-service-commons[objectstorage]",
+]
+auth = ["jwcrypto>=1.5.4, <2", "pydantic[email]>=2, <3"]
+crypt = ["pynacl>=1.5.0, <2", "crypt4gh>=1.6.0, <2"]
+dev = ["requests>=2.31.0, <3"]
+objectstorage = ["hexkit>=2, <3"]
+
+all = ["ghga-service-commons[api,auth,crypt,dev,objectstorage]"]
+
+[project.license]
+text = "Apache 2.0"
+
+[project.urls]
+Repository = "https://github.com/ghga-de/ghga-service-commons"

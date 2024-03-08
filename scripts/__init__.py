@@ -14,24 +14,4 @@
 # limitations under the License.
 #
 
-"""Implement global logic for running the application."""
-
-import asyncio
-
-from auth_demo.config import Config
-from auth_demo.inject import prepare_rest_app
-from ghga_service_commons.api import run_server
-from ghga_service_commons.utils.utc_dates import assert_tz_is_utc
-
-
-async def configure_and_run_server():
-    """Run the HTTP API."""
-    config = Config()
-    async with prepare_rest_app(config=config) as app:
-        await run_server(app=app, config=config)
-
-
-def run():
-    """Main entry point for running the server."""
-    assert_tz_is_utc()
-    asyncio.run(configure_and_run_server())
+"""Scripts and utils used during development or in CI pipelines."""
