@@ -18,6 +18,7 @@
 import base64
 import io
 import os
+from functools import wraps
 from pathlib import Path
 from tempfile import mkstemp
 from typing import Callable, NamedTuple, Union
@@ -48,7 +49,7 @@ class Crypt4GHKeyPair(NamedTuple):
 class RandomEncryptedData(NamedTuple):
     """Container for random Crypt4GH encrypted data.
 
-    User has to take care of closing the content object.
+    If not used as a context manager, the user has to take care of closing the content object.
     """
 
     content: io.BytesIO
@@ -70,14 +71,11 @@ class RandomEncryptedData(NamedTuple):
 def key_secret_decoder(function: Callable):
     """Decorator decoding string arguments from base64 to bytes"""
 
+    @wraps(function)
     def wrapper(**kwargs):
         """Decode all string arguments to byte representation"""
         for key, value in kwargs.items():
-            if isinstance(value, str) and key in [
-                "file_secret",
-                "private_key",
-                "public_key",
-            ]:
+            if isinstance(value, str) and key.endswith(("_key", "_secret")):
                 kwargs[key] = base64.b64decode(value)
         return function(**kwargs)
 
@@ -164,7 +162,7 @@ def generate_keypair() -> Crypt4GHKeyPair:
     passphrase = os.urandom(32).hex().encode()
     c4gh.generate(seckey=sk_file, pubkey=pk_file, passphrase=passphrase)
     public_key = get_public_key(pk_path)
-    private_key = get_private_key(sk_path, lambda: passphrase.decode())
+    private_key = get_private_key(sk_path, passphrase.decode)
     os.umask(original_umask)
 
     Path(pk_path).unlink()
@@ -182,8 +180,7 @@ def random_encrypted_content(
 
     with big_temp_file(file_size) as raw_file:
         # rewind input file for reading
-        raw_file.seek(0)
-        true_size = len(raw_file.read())
+        true_size = raw_file.tell()
         raw_file.seek(0)
         keys = [(0, private_key, public_key)]
         crypt4gh.lib.encrypt(keys=keys, infile=raw_file, outfile=encrypted_file)
