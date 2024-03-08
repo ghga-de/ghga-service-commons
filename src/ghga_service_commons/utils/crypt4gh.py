@@ -75,8 +75,11 @@ def key_secret_decoder(function: Callable):
     def wrapper(**kwargs):
         """Decode all string keyword arguments from base64 to bytes"""
         for key, value in kwargs.items():
-            if isinstance(value, str) and key.endswith(("_key", "_secret")):
-                kwargs[key] = base64.b64decode(value)
+            if isinstance(value, str):
+                if key.endswith(("_key", "_secret")) or key.startswith("encrypted"):
+                    kwargs[key] = base64.b64decode(value)
+                elif key.endswith("_path"):
+                    kwargs[key] = Path(value)
         return function(**kwargs)
 
     return wrapper
@@ -113,14 +116,8 @@ def decrypt_file(
 
     Private key should be passed as base64 encoded string or raw bytes.
     """
-    if isinstance(input_path, str):
-        input_path = Path(input_path)
-
-    if isinstance(output_path, str):
-        output_path = Path(output_path)
-
     keys = [(0, private_key, None)]
-    with input_path.open("rb") as infile, output_path.open("wb") as outfile:
+    with input_path.open("rb") as infile, output_path.open("wb") as outfile:  # type: ignore[union-attr]
         crypt4gh.lib.decrypt(keys=keys, infile=infile, outfile=outfile)
 
 
@@ -141,10 +138,8 @@ def extract_file_secret(
     """
     # (method - only 0 supported for now, private_key, public_key)
     keys = [(0, private_key, None)]
-    if isinstance(encrypted_header, str):
-        encrypted_header = base64.b64decode(encrypted_header)
 
-    infile = io.BytesIO(encrypted_header)
+    infile = io.BytesIO(encrypted_header)  # type: ignore[arg-type]
     session_keys, _ = crypt4gh.header.deconstruct(
         infile=infile, keys=keys, sender_pubkey=public_key
     )
