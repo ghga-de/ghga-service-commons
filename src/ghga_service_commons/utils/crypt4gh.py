@@ -73,7 +73,7 @@ def key_secret_decoder(function: Callable):
 
     @wraps(function)
     def wrapper(**kwargs):
-        """Decode all string arguments to byte representation"""
+        """Decode all string keyword arguments from base64 to bytes"""
         for key, value in kwargs.items():
             if isinstance(value, str) and key.endswith(("_key", "_secret")):
                 kwargs[key] = base64.b64decode(value)
