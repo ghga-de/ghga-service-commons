@@ -22,7 +22,7 @@ import pytest
 from fastapi.exceptions import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import BaseModel
-from starlette.status import HTTP_403_FORBIDDEN
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
 from ghga_service_commons.auth.context import AuthContextProtocol
 from ghga_service_commons.auth.policies import (
@@ -44,6 +44,8 @@ class DummyAuthProvider(AuthContextProtocol[DummyAuthContext]):
         """Return a dummy auth context."""
         if not token:
             return None
+        if token == "invalid":
+            raise self.AuthContextValidationError
         return DummyAuthContext(token=token)
 
 
@@ -59,6 +61,17 @@ async def test_get_auth_context_no_token():
     auth_provider = DummyAuthProvider()
     context = await get_auth_context_using_credentials(credentials, auth_provider)
     assert context is None
+
+
+@pytest.mark.asyncio
+async def test_get_auth_context_invalid_token():
+    """Test passing an invalid token to the get_auth_context function."""
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid")
+    auth_provider = DummyAuthProvider()
+    with pytest.raises(HTTPException) as exc_info:
+        await get_auth_context_using_credentials(credentials, auth_provider)
+    assert exc_info.value.status_code == HTTP_401_UNAUTHORIZED
+    assert exc_info.value.detail == "Invalid authentication credentials"
 
 
 @pytest.mark.asyncio
@@ -78,8 +91,19 @@ async def test_require_auth_context_no_token():
     auth_provider = DummyAuthProvider()
     with pytest.raises(HTTPException) as exc_info:
         await require_auth_context_using_credentials(credentials, auth_provider)
-    assert exc_info.value.status_code == HTTP_403_FORBIDDEN
+    assert exc_info.value.status_code == HTTP_401_UNAUTHORIZED
     assert exc_info.value.detail == "Not authenticated"
+
+
+@pytest.mark.asyncio
+async def test_require_auth_context_invalid_token():
+    """Test passing an invalid token to the require_auth_context function."""
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid")
+    auth_provider = DummyAuthProvider()
+    with pytest.raises(HTTPException) as exc_info:
+        await require_auth_context_using_credentials(credentials, auth_provider)
+    assert exc_info.value.status_code == HTTP_401_UNAUTHORIZED
+    assert exc_info.value.detail == "Invalid authentication credentials"
 
 
 @pytest.mark.asyncio
