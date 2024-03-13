@@ -44,14 +44,14 @@ class DummyAuthProvider(AuthContextProtocol[DummyAuthContext]):
         """Return a dummy auth context."""
         if not token:
             return None
-        if token == "invalid":
+        if "invalid" in token:
             raise self.AuthContextValidationError
         return DummyAuthContext(token=token)
 
 
 def dummy_predicate(context: DummyAuthContext) -> bool:
     """Return a dummy auth context predicate for testing."""
-    return context.token == "foo"
+    return context.token == "super"
 
 
 @pytest.mark.asyncio
@@ -75,13 +75,13 @@ async def test_get_auth_context_invalid_token():
 
 
 @pytest.mark.asyncio
-async def test_get_auth_context_with_token():
-    """Test passing a token to the get_auth_context function."""
-    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="foo")
+async def test_get_auth_context_with_valid_token():
+    """Test passing a valid token to the get_auth_context function."""
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="valid")
     auth_provider = DummyAuthProvider()
     context = await get_auth_context_using_credentials(credentials, auth_provider)
     assert context is not None
-    assert context.token == "foo"
+    assert context.token == "valid"
 
 
 @pytest.mark.asyncio
@@ -107,31 +107,31 @@ async def test_require_auth_context_invalid_token():
 
 
 @pytest.mark.asyncio
-async def test_require_auth_context_with_token():
-    """Test passing a token to the require_auth_context function."""
-    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="foo")
+async def test_require_auth_context_with_valid_token():
+    """Test passing a valid token to the require_auth_context function."""
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="valid")
     auth_provider = DummyAuthProvider()
     context = await require_auth_context_using_credentials(credentials, auth_provider)
     assert context is not None
-    assert context.token == "foo"
+    assert context.token == "valid"
 
 
 @pytest.mark.asyncio
 async def test_require_auth_context_with_happy_predicate():
     """Test the happy path of the require_auth_context function with a predicate."""
-    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="foo")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="super")
     auth_provider = DummyAuthProvider()
     context = await require_auth_context_using_credentials(
         credentials, auth_provider, dummy_predicate
     )
     assert context is not None
-    assert context.token == "foo"
+    assert context.token == "super"
 
 
 @pytest.mark.asyncio
 async def test_require_auth_context_with_unhappy_predicate():
     """Test the unhappy path of the require_auth_context function with a predicate."""
-    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="bar")
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="normal")
     auth_provider = DummyAuthProvider()
     with pytest.raises(HTTPException) as exc_info:
         await require_auth_context_using_credentials(
