@@ -42,7 +42,7 @@ from ghga_service_commons.httpyexpect.server.handlers.fastapi_ import (
     configure_exception_handler,
 )
 
-CORRELATION_ID_HEADER_NAME = "X-Correlation-ID"
+CORRELATION_ID_HEADER_NAME = "X-Request-Id"  # As set by emissary-ingress
 
 
 log = logging.getLogger(__name__)
