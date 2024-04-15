@@ -37,8 +37,8 @@ EXCLUDE = [
     ".devcontainer",
     "eggs",
     ".eggs",
-    "dist",
     "build",
+    "dist",
     "develop-eggs",
     "lib",
     "lib62",
@@ -64,6 +64,9 @@ EXCLUDE = [
     ".mypy.ini",
     ".pytest_cache",
     ".editorconfig",
+    ".tox",
+    "venv",
+    ".venv",
     ".template/.static_files.txt",
     ".template/.static_files_ignore.txt",
     ".template/.mandatory_files.txt",
@@ -82,6 +85,8 @@ EXCLUDE_ENDINGS = [
     "md",
     "pub",
     "pyc",
+    "pyd",
+    "typed",
     "sec",
     "toml",
     "txt",
@@ -176,13 +181,13 @@ def get_target_files(
     """Get target files that are not match the exclude conditions.
     Args:
         target_dir (pathlib.Path): The target dir to search.
-        exclude (List[str], optional):
+        exclude (list[str], optional):
             Overwrite default list of file/dir paths relative to
             the target dir that shall be excluded.
-        exclude_endings (List[str], optional):
+        exclude_endings (list[str], optional):
             Overwrite default list of file endings that shall
             be excluded.
-        exclude_pattern (List[str], optional):
+        exclude_pattern (list[str], optional):
             Overwrite default list of regex patterns match file path
             for exclusion.
     """
@@ -292,7 +297,7 @@ def validate_year_string(year_string: str, min_year: int = MIN_YEAR) -> bool:
         return int(year_string) == current_year
 
     # Otherwise, a range (e.g. 2021 - 2023) is expected:
-    match = re.match("(\d+) - (\d+)", year_string)
+    match = re.match(r"(\d+) - (\d+)", year_string)
 
     if not match:
         return False

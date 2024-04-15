@@ -43,8 +43,9 @@ fixable = [
     "D", # pydocstyle
 ]
 ignore = [
-    "E", # pycodestyle errors
-    "W", # pycodestyle warnings - pycodestyle covered by black
+    "E111", # indentation with invalid multiple (for formatter)
+    "E114", # indentation with invalid multiple comment (for formatter)
+    "E116", # over indentation (for formatter)
     "PLW", # pylint warnings
     "RUF001", # ambiguous unicode character strings
     "RUF010", # explicit conversion to string or repr: !s or !r
@@ -56,8 +57,8 @@ ignore = [
     "D400", # first doc line ends in period
     "D401", # non-imperative-mood
     "D107", # missing docstring in __init__
-    "D206", # indent-with-spaces (ignored for formatter)
-    "D300", # triple-single-quotes (ignored for formatter)
+    "D206", # indent-with-spaces (for formatter)
+    "D300", # triple-single-quotes (for formatter)
 ]
 select = [
     "C90", # McCabe Complexity
@@ -98,5 +99,5 @@ check_untyped_defs = true
 no_site_packages = false
 
 [tool.pytest.ini_options]
-minversion = "7.4"
+minversion = "8.0"
 asyncio_mode = "strict"
