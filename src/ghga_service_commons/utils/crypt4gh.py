@@ -15,13 +15,15 @@
 #
 """Contains utility functions to deal with Crypt4GH on a slightly higher level."""
 
+from __future__ import annotations
+
 import base64
 import io
 import os
 from functools import wraps
 from pathlib import Path
 from tempfile import mkstemp
-from typing import Callable, NamedTuple, Union, cast
+from typing import Callable, NamedTuple, cast
 
 import crypt4gh.header
 import crypt4gh.lib
@@ -87,10 +89,7 @@ def key_secret_decoder(function: Callable):
 
 @key_secret_decoder
 def create_envelope(
-    *,
-    file_secret: Union[str, bytes],
-    private_key: Union[str, bytes],
-    public_key: Union[str, bytes],
+    *, file_secret: str | bytes, private_key: str | bytes, public_key: str | bytes
 ) -> bytes:
     """Create a new Crypt4GH header/envelope.
 
@@ -107,10 +106,7 @@ def create_envelope(
 
 @key_secret_decoder
 def decrypt_file(
-    *,
-    input_path: Union[str, Path],
-    output_path: Union[str, Path],
-    private_key: Union[str, bytes],
+    *, input_path: str | Path, output_path: str | Path, private_key: str | bytes
 ) -> None:
     """Decrypt a Crypt4GH encrypted file.
 
@@ -124,10 +120,7 @@ def decrypt_file(
 
 @key_secret_decoder
 def extract_file_secret(
-    *,
-    encrypted_header: Union[str, bytes],
-    private_key: Union[str, bytes],
-    public_key: Union[str, bytes],
+    *, encrypted_header: str | bytes, private_key: str | bytes, public_key: str | bytes
 ) -> bytes:
     """Extract symmetric secret from Crypt4GH header/envelope.
 
@@ -169,7 +162,7 @@ def generate_keypair() -> Crypt4GHKeyPair:
 
 @key_secret_decoder
 def random_encrypted_content(
-    file_size: int, private_key: Union[str, bytes], public_key: Union[str, bytes]
+    file_size: int, private_key: str | bytes, public_key: str | bytes
 ) -> RandomEncryptedData:
     """Create an in-memory file with random content that is Crypt4GH encrypted."""
     encrypted_file = io.BytesIO()

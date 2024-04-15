@@ -15,11 +15,12 @@
 #
 """Test Crypt4GH utility functions."""
 
+from __future__ import annotations
+
 import base64
 import os
 from pathlib import Path
 from tempfile import mkstemp
-from typing import Union
 
 import pytest
 
@@ -64,8 +65,8 @@ def test_crypt4gh_utilities_bytes(file_size: int, use_path: bool):
     )
     assert len(file_secret) == 32
 
-    in_path: Union[str, Path] = mkstemp()[1]
-    out_path: Union[str, Path] = mkstemp()[1]
+    in_path: str | Path = mkstemp()[1]
+    out_path: str | Path = mkstemp()[1]
 
     test_data.content.seek(0)
     with open(in_path, "wb") as infile:
@@ -115,8 +116,8 @@ def test_crypt4gh_utilities_str(file_size: int, use_path: bool):
     )
     assert len(file_secret) == 32
 
-    in_path: Union[str, Path] = mkstemp()[1]
-    out_path: Union[str, Path] = mkstemp()[1]
+    in_path: str | Path = mkstemp()[1]
+    out_path: str | Path = mkstemp()[1]
 
     test_data.content.seek(0)
     with open(in_path, "wb") as infile:
