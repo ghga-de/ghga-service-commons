@@ -21,7 +21,7 @@ import os
 from functools import wraps
 from pathlib import Path
 from tempfile import mkstemp
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple, Union, cast
 
 import crypt4gh.header
 import crypt4gh.lib
@@ -117,7 +117,8 @@ def decrypt_file(
     Private key should be passed as base64 encoded string or raw bytes.
     """
     keys = [(0, private_key, None)]
-    with input_path.open("rb") as infile, output_path.open("wb") as outfile:  # type: ignore[union-attr]
+    input_path, output_path = cast(tuple[Path, Path], (input_path, output_path))
+    with input_path.open("rb") as infile, output_path.open("wb") as outfile:
         crypt4gh.lib.decrypt(keys=keys, infile=infile, outfile=outfile)
 
 
@@ -138,8 +139,8 @@ def extract_file_secret(
     """
     # (method - only 0 supported for now, private_key, public_key)
     keys = [(0, private_key, None)]
-
-    infile = io.BytesIO(encrypted_header)  # type: ignore[arg-type]
+    encrypted_header = cast(bytes, encrypted_header)
+    infile = io.BytesIO(encrypted_header)
     session_keys, _ = crypt4gh.header.deconstruct(
         infile=infile, keys=keys, sender_pubkey=public_key
     )
