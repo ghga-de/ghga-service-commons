@@ -6,9 +6,9 @@ on:
 
 jobs:
   pypi-publish:
-    runs-on: ubuntu-latest
-
     name: Publish tagged release on PyPI
+
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
