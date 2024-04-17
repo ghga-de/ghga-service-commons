@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   ghga_service_commons:
     build:
