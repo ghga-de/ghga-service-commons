@@ -19,6 +19,8 @@
 from collections.abc import Mapping
 from typing import Any, Callable, Literal, Protocol
 
+__all__ = ["Response"]
+
 ExceptionFactoryParam = Literal["status_code", "exception_id", "description", "data"]
 StatusCode = int
 ExceptionId = str
