@@ -4,4 +4,4 @@
 -r requirements-dev-template.in
 
 # additional requirements can be listed here
-tox >= 4.12.0
+tox>=4.15.0
