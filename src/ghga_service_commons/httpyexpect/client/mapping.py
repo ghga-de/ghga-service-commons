@@ -39,7 +39,7 @@ from ghga_service_commons.httpyexpect.validation import (
     validate_exception_id,
 )
 
-__all__ = ["FactoryKit", "ExceptionMapping"]
+__all__ = ["EXCEPTION_FACTORY_PARAMS", "FactoryKit", "ExceptionMapping"]
 
 EXCEPTION_FACTORY_PARAMS = ("status_code", "exception_id", "description", "data")
 
