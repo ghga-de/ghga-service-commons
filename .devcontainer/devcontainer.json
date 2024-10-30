@@ -25,7 +25,7 @@
 				"python.testing.unittestEnabled": false,
 				"python.testing.pytestEnabled": true,
 				"editor.codeActionsOnSave": {
-					"source.organizeImports": true
+					"source.organizeImports": "explicit"
 				},
 				"editor.formatOnSave": true,
 				"editor.renderWhitespace": "all",
@@ -55,7 +55,8 @@
 				"visualstudioexptteam.vscodeintellicode",
 				"ymotongpoo.licenser",
 				"charliermarsh.ruff",
-				"ms-python.mypy-type-checker"
+				"ms-python.mypy-type-checker",
+				"-ms-python.autopep8"
 			]
 		}
 	},
