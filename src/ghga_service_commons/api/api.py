@@ -20,7 +20,9 @@ RESTful webapps with FastAPI.
 """
 
 import asyncio
+import http
 import logging
+import time
 from collections.abc import Sequence
 from functools import partial
 from typing import Optional, Union
@@ -217,6 +219,21 @@ async def correlation_id_middleware(
         return response
 
 
+async def request_logging_middleware(request: Request, call_next):
+    url = request.url
+    start_time = time.time()
+    response = await call_next(request)
+    duration = round((time.time() - start_time) * 1000)
+    try:
+        status_phrase = http.HTTPStatus(response.status_code).phrase
+    except ValueError:
+        status_phrase = ""
+    log.info(
+        f'{request.method} {url} "{response.status_code} {status_phrase}" - {duration}ms'
+    )
+    return response
+
+
 def configure_app(app: FastAPI, config: ApiConfigBase):
     """Configure a FastAPI app based on a config object."""
     app.root_path = config.api_root_path.rstrip("/")
@@ -235,6 +252,7 @@ def configure_app(app: FastAPI, config: ApiConfigBase):
         kwargs["allow_credentials"] = config.cors_allow_credentials
 
     app.add_middleware(CORSMiddleware, **kwargs)
+    app.add_middleware(BaseHTTPMiddleware, dispatch=request_logging_middleware)
     app.add_middleware(
         BaseHTTPMiddleware,
         dispatch=partial(
