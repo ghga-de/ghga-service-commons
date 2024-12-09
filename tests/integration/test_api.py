@@ -17,6 +17,7 @@
 
 import asyncio
 import multiprocessing
+import re
 import time
 
 import httpx
@@ -112,12 +113,7 @@ async def test_request_duration_log(caplog):
     # Get list of the log messages
     for record in caplog.record_tuples:
         if record[0] == "ghga_service_commons.api.api":
-            msg = record[2]
-            assert msg.endswith(" ms")
-            msg = msg.removesuffix(" ms")
-
-            duration = msg.rsplit(" ", 1)[1]
-            assert duration.isnumeric
+            assert re.match(r'GET http://.* "200 OK" - \d+ ms$', record[2])
             break
     else:
         assert False, "Request duration log was not captured"
