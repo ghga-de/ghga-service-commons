@@ -224,7 +224,7 @@ async def request_logging_middleware(request: Request, call_next):
     url = request.url
     start_time = time.time()
     response = await call_next(request)
-    duration = round((time.time() - start_time) * 1000)
+    duration = int(round((time.time() - start_time) * 1000))
     try:
         status_phrase = http.HTTPStatus(response.status_code).phrase
     except ValueError:
