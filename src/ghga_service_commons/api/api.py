@@ -229,12 +229,12 @@ async def request_logging_middleware(request: Request, call_next):
         status_phrase = http.HTTPStatus(response.status_code).phrase
     except ValueError:
         status_phrase = ""
-    msg = f'{request.method} {url} "{response.status_code} {status_phrase}" - {duration}ms'
+    msg = f'{request.method} {url} "{response.status_code} {status_phrase}" - {duration} ms'
     log.info(
         msg,
         extra={
             "method": request.method,
-            "url": url,
+            "url": str(url),
             "status_code": response.status_code,
             "duration": duration,
         },
