@@ -159,7 +159,7 @@ def set_header_correlation_id(request: Request, correlation_id: str):
     request.scope.update(headers=headers.raw)
     # delete _headers to force update
     delattr(request, "_headers")
-    log.info("Assigned %s as header correlation ID value.", correlation_id)
+    log.debug("Assigned %s as header correlation ID value.", correlation_id)
 
 
 def get_validated_correlation_id(
@@ -177,7 +177,7 @@ def get_validated_correlation_id(
     """
     if not correlation_id and generate_correlation_id:
         correlation_id = new_correlation_id()
-        log.info("Generated new correlation id: %s", correlation_id)
+        log.debug("Generated new correlation id: %s", correlation_id)
     else:
         validate_correlation_id(correlation_id)
     return correlation_id
