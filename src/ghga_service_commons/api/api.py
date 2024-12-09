@@ -236,7 +236,7 @@ async def request_logging_middleware(request: Request, call_next):
             "method": request.method,
             "url": str(url),
             "status_code": response.status_code,
-            "duration": duration,
+            "duration_ms": duration,
         },
     )
     return response
