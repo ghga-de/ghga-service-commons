@@ -18,6 +18,11 @@
 
 import pytest
 from fastapi import FastAPI
+from hexkit.correlation import (
+    CorrelationIdContextError,
+    get_correlation_id,
+    set_new_correlation_id,
+)
 
 from ghga_service_commons.api.api import (
     CORRELATION_ID_HEADER_NAME,
@@ -25,8 +30,10 @@ from ghga_service_commons.api.api import (
     configure_app,
 )
 from ghga_service_commons.api.testing import AsyncTestClient
+from ghga_service_commons.http.correlation import attach_correlation_id_to_requests
 
 VALID_CORRELATION_ID = "5deb0e61-5058-4e96-92d4-0529d045832e"
+pytestmark = pytest.mark.asyncio()
 
 
 @pytest.mark.parametrize(
@@ -40,7 +47,6 @@ VALID_CORRELATION_ID = "5deb0e61-5058-4e96-92d4-0529d045832e"
         ("", True, 200),  # empty string with generate flag is fine
     ],
 )
-@pytest.mark.asyncio
 async def test_middleware(
     preset_id: str,
     generate_correlation_id: bool,
@@ -61,3 +67,68 @@ async def test_middleware(
         )
 
         assert response.status_code == status_code
+
+
+async def test_correlation_id_request_hook():
+    """Test to see if the correlation ID is correctly propagated between services.
+
+    Both of the defined endpoints will not raise an error when calling
+    `get_correlation_id` because the default `ApiConfigBase` specifies that we
+    generate and use a new correlation ID in the API middleware if one is not found in
+    the ContextVar.
+    """
+    some_other_service = FastAPI()
+    configure_app(some_other_service, ApiConfigBase())
+
+    # Define a second/final endpoint that returns the current correlation ID
+    some_other_service.get("/test")(lambda: get_correlation_id())
+
+    this_service = FastAPI()
+    configure_app(this_service, ApiConfigBase())
+
+    @this_service.get("/")
+    async def first_endpoint():
+        """Call the other endpoint"""
+        correlation_id = get_correlation_id()
+
+        async with AsyncTestClient(app=some_other_service) as client:
+            # Make a call to the other API and verify that the CID isn't passed on
+            response = await client.get("/test")
+            assert response.json() != correlation_id
+
+            # Add tracing, and make sure it fails if there's not a CID already set
+            attach_correlation_id_to_requests(client, generate_correlation_id=False)
+
+            # Make another call to the other API, passing on the correlation ID
+            response = await client.get("/test")
+            assert response.json() == correlation_id
+        return correlation_id
+
+    # Kick off the request flow
+    async with AsyncTestClient(app=this_service) as rest_client:
+        attach_correlation_id_to_requests(rest_client, generate_correlation_id=True)
+        # Verify that no CID is currently set
+        with pytest.raises(CorrelationIdContextError):
+            _ = get_correlation_id()
+
+        # Verify that the CID is propagated from here to the final API endpoint and back
+        async with set_new_correlation_id() as correlation_id:
+            response = await rest_client.get("/")
+            assert response.json() == correlation_id
+
+
+async def test_hook_errors():
+    """Assert that we raise an error when making requests when generate_correlation_id
+    is False.
+    """
+    app = FastAPI()
+
+    config = ApiConfigBase()
+    configure_app(app, config)
+
+    app.get("/")(lambda: "hello world")
+
+    async with AsyncTestClient(app=app) as client:
+        attach_correlation_id_to_requests(client, generate_correlation_id=False)
+        with pytest.raises(CorrelationIdContextError):
+            await client.get("/")
