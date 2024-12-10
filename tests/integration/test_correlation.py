@@ -16,17 +16,21 @@
 
 """Test the correlation ID middleware."""
 
+from contextlib import nullcontext
+
 import pytest
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from hexkit.correlation import (
     CorrelationIdContextError,
     get_correlation_id,
+    new_correlation_id,
     set_new_correlation_id,
 )
 
 from ghga_service_commons.api.api import (
     CORRELATION_ID_HEADER_NAME,
     ApiConfigBase,
+    UnexpectedCorrelationIdError,
     configure_app,
 )
 from ghga_service_commons.api.testing import AsyncTestClient
@@ -47,19 +51,17 @@ pytestmark = pytest.mark.asyncio()
         ("", True, 200),  # empty string with generate flag is fine
     ],
 )
-async def test_middleware(
+async def test_middleware_requests(
     preset_id: str,
     generate_correlation_id: bool,
     status_code: int,
 ):
     """Test that the InvalidCorrelationIdErrors are returned as 400 status-code responses."""
     app = FastAPI()
+    app.get("/")(lambda: "some response")
 
     config = ApiConfigBase(generate_correlation_id=generate_correlation_id)
     configure_app(app, config)
-
-    # dummy endpoint to get a 200 status code
-    app.get("/")(lambda: "some response")
 
     async with AsyncTestClient(app=app) as rest_client:
         response = await rest_client.get(
@@ -67,6 +69,43 @@ async def test_middleware(
         )
 
         assert response.status_code == status_code
+
+
+@pytest.mark.parametrize("use_unexpected_cid", [True, False])
+async def test_middleware_responses(use_unexpected_cid: bool):
+    """Make sure the middleware sets the CID header on responses.
+
+    The middleware should also raise an error if the CID value is unexpected.
+    """
+    app = FastAPI()
+
+    config = ApiConfigBase()
+    configure_app(app, config)
+
+    @app.get("/")
+    async def endpoint():
+        if use_unexpected_cid:
+            return Response(headers={CORRELATION_ID_HEADER_NAME: new_correlation_id()})
+        return "done"
+
+    async with set_new_correlation_id() as correlation_id:
+        async with AsyncTestClient(app=app) as rest_client:
+            # If 'use_unexpected_cid' is set, then the endpoint will return a different
+            #  cid in the header. The middleware should detect this and raise an error.
+            #  Our services should not have a reason to modify this value.
+            with (
+                pytest.raises(UnexpectedCorrelationIdError)
+                if use_unexpected_cid
+                else nullcontext()
+            ):
+                response = await rest_client.get(
+                    "/", headers={CORRELATION_ID_HEADER_NAME: correlation_id}
+                )
+
+            # Only check the response headers now if we used the normal CID
+            if not use_unexpected_cid:
+                assert CORRELATION_ID_HEADER_NAME in response.headers
+                assert response.headers[CORRELATION_ID_HEADER_NAME] == correlation_id
 
 
 async def test_correlation_id_request_hook():
@@ -102,6 +141,7 @@ async def test_correlation_id_request_hook():
             # Make another call to the other API, passing on the correlation ID
             response = await client.get("/test")
             assert response.json() == correlation_id
+            assert response.headers[CORRELATION_ID_HEADER_NAME] == correlation_id
         return correlation_id
 
     # Kick off the request flow
@@ -115,6 +155,7 @@ async def test_correlation_id_request_hook():
         async with set_new_correlation_id() as correlation_id:
             response = await rest_client.get("/")
             assert response.json() == correlation_id
+            assert response.headers[CORRELATION_ID_HEADER_NAME] == correlation_id
 
 
 async def test_hook_errors():
