@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tools to enhance traceability of HTTP requests across microservices."""
 
-import logging
 from functools import partial
 from typing import Union
 
@@ -26,7 +25,6 @@ from hexkit.correlation import (
 )
 
 CORRELATION_ID_HEADER_NAME = "X-Request-Id"
-log = logging.getLogger(__name__)
 
 
 def add_correlation_id_to_request(request, generate_correlation_id: bool):
