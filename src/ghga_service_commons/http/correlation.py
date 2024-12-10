@@ -26,8 +26,10 @@ from hexkit.correlation import (
 
 CORRELATION_ID_HEADER_NAME = "X-Request-Id"
 
+__all__ = ["attach_correlation_id_to_requests"]
 
-def add_correlation_id_to_request(request, generate_correlation_id: bool):
+
+def _cid_request_hook(request, generate_correlation_id: bool):
     """Include the correlation ID in the request header so it is propagated.
 
     If the correlation ID isn't set, one will be generated if `generate_correlation_id`
@@ -47,9 +49,9 @@ def add_correlation_id_to_request(request, generate_correlation_id: bool):
     request.headers[CORRELATION_ID_HEADER_NAME] = correlation_id
 
 
-async def add_correlation_id_to_request_async(request, generate_correlation_id: bool):
-    """Async version of `add_correlation_id_to_request`"""
-    add_correlation_id_to_request(request, generate_correlation_id)
+async def _cid_request_hook_async(request, generate_correlation_id: bool):
+    """Async version of `_cid_request_hook`"""
+    _cid_request_hook(request, generate_correlation_id)
 
 
 def attach_correlation_id_to_requests(
@@ -62,13 +64,13 @@ def attach_correlation_id_to_requests(
         client.event_hooks["request"] = []
 
     event_hook = partial(
-        add_correlation_id_to_request,
+        _cid_request_hook,
         generate_correlation_id=generate_correlation_id,
     )
 
     if isinstance(client, httpx.AsyncClient):
         event_hook = partial(
-            add_correlation_id_to_request_async,
+            _cid_request_hook_async,
             generate_correlation_id=generate_correlation_id,
         )
     client.event_hooks["request"].append(event_hook)
