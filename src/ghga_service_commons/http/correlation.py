@@ -57,12 +57,12 @@ async def _cid_request_hook_async(request, generate_correlation_id: bool):
 def attach_correlation_id_to_requests(
     client: Union[httpx.Client, httpx.AsyncClient],
     *,
-    generate_correlation_id: bool,
+    generate_correlation_id: bool = True,
 ):
     """Add an event hook to an httpx Client that includes the correlation ID header."""
     is_async = isinstance(client, httpx.AsyncClient)
     event_hook = partial(
-        _cid_request_hook_async if is_asycnc else _cid_request_hook,
+        _cid_request_hook_async if is_async else _cid_request_hook,
         generate_correlation_id=generate_correlation_id,
     )
     client.event_hooks.setdefault("request", []).append(event_hook)
