@@ -18,13 +18,15 @@
 
 from contextlib import nullcontext
 
+import httpx
 import pytest
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Request, Response
 from hexkit.correlation import (
     CorrelationIdContextError,
     get_correlation_id,
     new_correlation_id,
     set_new_correlation_id,
+    validate_correlation_id,
 )
 
 from ghga_service_commons.api.api import (
@@ -34,7 +36,10 @@ from ghga_service_commons.api.api import (
     configure_app,
 )
 from ghga_service_commons.api.testing import AsyncTestClient
-from ghga_service_commons.http.correlation import attach_correlation_id_to_requests
+from ghga_service_commons.http.correlation import (
+    AsyncClient,
+    attach_correlation_id_to_requests,
+)
 
 VALID_CORRELATION_ID = "5deb0e61-5058-4e96-92d4-0529d045832e"
 pytestmark = pytest.mark.asyncio()
@@ -173,3 +178,37 @@ async def test_hook_errors():
         attach_correlation_id_to_requests(client, generate_correlation_id=False)
         with pytest.raises(CorrelationIdContextError):
             await client.get("/")
+
+
+async def test_async_client():
+    """Test the custom AsyncClient class.
+
+    It should always add the correlation ID header, and it should generate a new
+    correlation ID if none exists instead of raising an error.
+    """
+    app = FastAPI()
+
+    config = ApiConfigBase()
+    configure_app(app, config)
+
+    @app.get("/")
+    async def endpoint(request: Request):
+        """Return the correlation ID header value from the request."""
+        assert CORRELATION_ID_HEADER_NAME in request.headers
+        validate_correlation_id(request.headers[CORRELATION_ID_HEADER_NAME])
+        return request.headers[CORRELATION_ID_HEADER_NAME]
+
+    # Create an AsyncClient instance (NOT AsyncTestClient!)
+    async with AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://localhost:8080"
+    ) as client:
+        # Verify that a new correlation ID is created outside of a CID context
+        response = await client.get("/")
+        assert CORRELATION_ID_HEADER_NAME in response.headers
+        validate_correlation_id(response.headers[CORRELATION_ID_HEADER_NAME])
+
+        # Verify that the CID is passed when it exists
+        async with set_new_correlation_id() as correlation_id:
+            response = await client.get("/")
+            assert response.headers[CORRELATION_ID_HEADER_NAME] == correlation_id
+            assert response.json() == correlation_id
