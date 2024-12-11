@@ -62,12 +62,15 @@ def attach_correlation_id_to_requests(
 
 
 class AsyncClient(httpx.AsyncClient):
-    """A version of httpx.AsyncClient that always attaches the correlation ID header.
+    """A version of httpx.AsyncClient that attaches the correlation ID header in requests.
 
-    If no correlation ID is found in the current context, a new one will be generated.
+    If no correlation ID is found in the current context, a new one will be generated
+    OR an error will be raised based on the value of `generate_correlation_id`.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, generate_correlation_id: bool = True, **kwargs):
         super().__init__(*args, **kwargs)
-        event_hook = partial(_cid_request_hook, generate_correlation_id=True)
+        event_hook = partial(
+            _cid_request_hook, generate_correlation_id=generate_correlation_id
+        )
         self.event_hooks.setdefault("request", []).append(event_hook)

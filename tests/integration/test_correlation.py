@@ -180,7 +180,8 @@ async def test_hook_errors():
             await client.get("/")
 
 
-async def test_async_client():
+@pytest.mark.parametrize("generate_correlation_id", [True, False])
+async def test_async_client(generate_correlation_id: bool):
     """Test the custom AsyncClient class.
 
     It should always add the correlation ID header, and it should generate a new
@@ -200,12 +201,22 @@ async def test_async_client():
 
     # Create an AsyncClient instance (NOT AsyncTestClient!)
     async with AsyncClient(
-        transport=httpx.ASGITransport(app=app), base_url="http://localhost:8080"
+        generate_correlation_id=generate_correlation_id,
+        transport=httpx.ASGITransport(app=app),
+        base_url="http://localhost:8080",
     ) as client:
-        # Verify that a new correlation ID is created outside of a CID context
-        response = await client.get("/")
-        assert CORRELATION_ID_HEADER_NAME in response.headers
-        validate_correlation_id(response.headers[CORRELATION_ID_HEADER_NAME])
+        # Verify behavior outside of a CID context
+        with (
+            pytest.raises(CorrelationIdContextError)
+            if not generate_correlation_id
+            else nullcontext()
+        ):
+            response = await client.get("/")
+
+        # Check the response headers, but only in the non-erring case
+        if generate_correlation_id:
+            assert CORRELATION_ID_HEADER_NAME in response.headers
+            validate_correlation_id(response.headers[CORRELATION_ID_HEADER_NAME])
 
         # Verify that the CID is passed when it exists
         async with set_new_correlation_id() as correlation_id:
