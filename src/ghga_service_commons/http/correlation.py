@@ -15,7 +15,6 @@
 """Tools to enhance traceability of HTTP requests across microservices."""
 
 from functools import partial
-from typing import Union
 
 import httpx
 from hexkit.correlation import (
@@ -29,7 +28,7 @@ CORRELATION_ID_HEADER_NAME = "X-Request-Id"
 __all__ = ["attach_correlation_id_to_requests"]
 
 
-def _cid_request_hook(request, generate_correlation_id: bool):
+async def _cid_request_hook(request, generate_correlation_id: bool):
     """Include the correlation ID in the request header so it is propagated.
 
     If the correlation ID isn't set, one will be generated if `generate_correlation_id`
@@ -49,20 +48,14 @@ def _cid_request_hook(request, generate_correlation_id: bool):
     request.headers[CORRELATION_ID_HEADER_NAME] = correlation_id
 
 
-async def _cid_request_hook_async(request, generate_correlation_id: bool):
-    """Async version of `_cid_request_hook`"""
-    _cid_request_hook(request, generate_correlation_id)
-
-
 def attach_correlation_id_to_requests(
-    client: Union[httpx.Client, httpx.AsyncClient],
+    client: httpx.AsyncClient,
     *,
     generate_correlation_id: bool = True,
 ):
     """Add an event hook to an httpx Client that includes the correlation ID header."""
-    is_async = isinstance(client, httpx.AsyncClient)
     event_hook = partial(
-        _cid_request_hook_async if is_async else _cid_request_hook,
+        _cid_request_hook,
         generate_correlation_id=generate_correlation_id,
     )
     client.event_hooks.setdefault("request", []).append(event_hook)
