@@ -50,10 +50,10 @@ def configure_exception_handler(app: FastAPI) -> None:
         # (The above is required by the corresponding FastAPI interface but not used here)
         exc: HttpException,
     ) -> JSONResponse:
-        """Attach a custom exception handler to the FastAPI app.
+        """Attach a custom 500 exception handler to the FastAPI app.
 
-        The custom exception handler translates httpyexpect's HttpExceptions
-        into a FastAPI JSONResponse.
+        This exception handler should properly wrap unhandled exceptions so they only
+        propagate a generic message instead of carrying the actual exception message.
         """
         return JSONResponse(
             status_code=500, content={"message": "Internal Server Error."}
