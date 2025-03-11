@@ -1,6 +1,6 @@
 [project]
 name = "ghga_service_commons"
-version = "3.4.1"
+version = "4.0.0"
 description = "A library that contains common functionality used in services of GHGA"
 readme = "README.md"
 authors = [
@@ -33,7 +33,7 @@ Repository = "https://github.com/ghga-de/ghga-service-commons"
 [tool.tox]
 legacy_tox_ini = """
     [tox]
-    env_list = py3{9,12}
+    env_list = py3{9,12,13}
 
     [gh-actions]
     python =
@@ -41,6 +41,7 @@ legacy_tox_ini = """
         3.10: py310
         3.11: py311
         3.12: py312
+        3.13: py313
 
     [testenv]
     pass_env =
