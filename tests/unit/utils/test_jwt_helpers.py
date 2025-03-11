@@ -32,7 +32,7 @@ def test_sign_and_validate():
     assert isinstance(key_dict, dict)
     assert key_dict["kty"] == "EC" and key_dict["crv"] == "P-256"
     assert key_dict["d"] and key_dict["x"] and key_dict["y"]
-    claims = {"name": "John Doe", "role": "admin"}
+    claims = {"name": "John Doe", "status": "VIP"}
     token = sign_and_serialize_token(claims, key, valid_seconds=300)
     assert isinstance(token, str)
     assert len(token) > 80

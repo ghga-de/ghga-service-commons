@@ -17,6 +17,7 @@
 """Test the REST API."""
 
 import asyncio
+from typing import Any
 
 import pytest
 from fastapi import status
@@ -43,14 +44,14 @@ def client() -> AsyncTestClient:
 
 def get_headers(admin: bool = False) -> dict[str, str]:
     """Get a request header with an auth token for testing."""
-    claims = {
+    claims: dict[str, Any] = {
         "name": "John Doe",
         "email": "john@home.org",
         "title": "Dr.",
         "id": "john-doe@ghga",
     }
     if admin:
-        claims["role"] = "admin"
+        claims["roles"] = ["admin"]
     token = sign_and_serialize_token(claims, AUTH_KEY_PAIR)
     return {"Authorization": f"Bearer {token}"}
 
@@ -82,7 +83,7 @@ async def test_get_auth_authenticated(client):
         "email": "john@home.org",
         "title": "Dr.",
         "id": "john-doe@ghga",
-        "role": None,
+        "roles": [],
     }
 
 
@@ -110,7 +111,7 @@ async def test_require_auth_authenticated(client):
         "email": "john@home.org",
         "title": "Dr.",
         "id": "john-doe@ghga",
-        "role": None,
+        "roles": [],
     }
 
 
@@ -147,5 +148,5 @@ async def test_require_admin_authenticated_as_admin(client):
         "email": "john@home.org",
         "title": "Dr.",
         "id": "john-doe@ghga",
-        "role": "admin",
+        "roles": ["admin"],
     }
