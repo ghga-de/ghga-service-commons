@@ -56,7 +56,9 @@ def get_headers(admin: bool = False) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio
+
+
 async def test_get_auth_unauthenticated(client):
     """Test the get_auth endpoint unauthenticated."""
     response = await client.get("/get_auth")
@@ -67,7 +69,6 @@ async def test_get_auth_unauthenticated(client):
     assert res["context"] is None
 
 
-@pytest.mark.asyncio
 async def test_get_auth_authenticated(client):
     """Test the get_auth endpoint authenticated."""
     response = await client.get("/get_auth", headers=get_headers())
@@ -87,7 +88,6 @@ async def test_get_auth_authenticated(client):
     }
 
 
-@pytest.mark.asyncio
 async def test_require_auth_unauthenticated(client):
     """Test the require_auth endpoint unauthenticated."""
     response = await client.get("/require_auth")
@@ -95,7 +95,6 @@ async def test_require_auth_unauthenticated(client):
     assert response.json() == {"detail": "Not authenticated"}
 
 
-@pytest.mark.asyncio
 async def test_require_auth_authenticated(client):
     """Test the require_auth endpoint authenticated."""
     response = await client.get("/require_auth", headers=get_headers())
@@ -115,7 +114,6 @@ async def test_require_auth_authenticated(client):
     }
 
 
-@pytest.mark.asyncio
 async def test_require_admin_unauthenticated(client):
     """Test the require_admin endpoint unauthenticated."""
     response = await client.get("/require_admin")
@@ -123,7 +121,6 @@ async def test_require_admin_unauthenticated(client):
     assert response.json() == {"detail": "Not authenticated"}
 
 
-@pytest.mark.asyncio
 async def test_require_admin_authenticated_but_not_admin(client):
     """Test the require_admin endpoint authenticated, but not as admin."""
     response = await client.get("/require_admin", headers=get_headers())
@@ -131,7 +128,6 @@ async def test_require_admin_authenticated_but_not_admin(client):
     assert response.json() == {"detail": "Not authorized"}
 
 
-@pytest.mark.asyncio
 async def test_require_admin_authenticated_as_admin(client):
     """Test the require_admin endpoint authenticated as admin."""
     response = await client.get("/require_admin", headers=get_headers(admin=True))
