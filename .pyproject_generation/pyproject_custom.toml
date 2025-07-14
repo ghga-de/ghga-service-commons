@@ -1,6 +1,6 @@
 [project]
 name = "ghga_service_commons"
-version = "4.1.1"
+version = "4.2.0"
 description = "A library that contains common functionality used in services of GHGA"
 readme = "README.md"
 authors = [
@@ -20,7 +20,7 @@ http = [
 auth = ["jwcrypto>=1.5.6, <2", "pydantic[email]>=2, <3"]
 crypt = ["pynacl>=1.5, <2", "crypt4gh>=1.6, <2"]
 dev = ["requests>=2.31, <3"]
-objectstorage = ["hexkit>=2, <6"]
+objectstorage = ["hexkit>=7"]
 
 all = ["ghga-service-commons[api,auth,crypt,dev,http,objectstorage]"]
 
