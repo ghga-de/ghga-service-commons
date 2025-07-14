@@ -28,7 +28,6 @@ __all__ = ["UTC", "UTCDatetime", "assert_tz_is_utc", "convert_tz_to_utc", "now_a
 UTC = timezone.utc
 
 
-# TODO: Use utils from hexkit maybe?
 def assert_tz_is_utc() -> None:
     """Verify that the default timezone is set to UTC.
 
@@ -67,5 +66,7 @@ def now_as_utc() -> UTCDatetime:
     """Return the current datetime with UTC timezone.
 
     Note: This is different from datetime.utcnow() which has no timezone.
+    Note: For use in Pydantic models, prefer using `hexkit.utils.now_utc_ms_prec()`
+    which returns a UTC datetime with millisecond-only precision.
     """
     return UTCDatetime.now(UTC)
