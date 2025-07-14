@@ -28,6 +28,7 @@ __all__ = ["UTC", "UTCDatetime", "assert_tz_is_utc", "convert_tz_to_utc", "now_a
 UTC = timezone.utc
 
 
+# TODO: Use utils from hexkit maybe?
 def assert_tz_is_utc() -> None:
     """Verify that the default timezone is set to UTC.
 
