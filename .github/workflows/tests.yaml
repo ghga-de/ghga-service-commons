@@ -26,7 +26,7 @@ jobs:
       - name: Install tox plugin
         id: install-tox-gh-actions
         run: |
-          pip install --disable-pip-version-check "tox-gh-actions>=3.2,<4"
+          pip install --disable-pip-version-check "tox-gh-actions>=3.3,<4"
 
       - name: Run tests with Python ${{ matrix.python-version }}
         id: pytest
