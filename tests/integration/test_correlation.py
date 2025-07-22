@@ -104,20 +104,20 @@ async def test_middleware_responses(use_unexpected_cid: bool):
         # If 'use_unexpected_cid' is set, then the endpoint will return a different
         #  cid in the header. The middleware should detect this and raise an error.
         #  Our services should not have a reason to modify this value.
-        correlation_id = str(correlation_id)
+        cid_string = str(correlation_id)
         with (
             pytest.raises(UnexpectedCorrelationIdError)
             if use_unexpected_cid
             else nullcontext()
         ):
             response = await rest_client.get(
-                "/", headers={CORRELATION_ID_HEADER_NAME: correlation_id}
+                "/", headers={CORRELATION_ID_HEADER_NAME: cid_string}
             )
 
         # Only check the response headers now if we used the normal CID
         if not use_unexpected_cid:
             assert CORRELATION_ID_HEADER_NAME in response.headers
-            assert response.headers[CORRELATION_ID_HEADER_NAME] == correlation_id
+            assert response.headers[CORRELATION_ID_HEADER_NAME] == cid_string
 
 
 async def test_correlation_id_request_hook():
@@ -166,9 +166,9 @@ async def test_correlation_id_request_hook():
         # Verify that the CID is propagated from here to the final API endpoint and back
         async with set_new_correlation_id() as correlation_id:
             response = await rest_client.get("/")
-            correlation_id = str(correlation_id)
-            assert response.json() == correlation_id
-            assert response.headers[CORRELATION_ID_HEADER_NAME] == correlation_id
+            cid_string = str(correlation_id)
+            assert response.json() == cid_string
+            assert response.headers[CORRELATION_ID_HEADER_NAME] == cid_string
 
 
 async def test_hook_errors():
@@ -234,7 +234,7 @@ async def test_async_client(generate_correlation_id: bool):
 
         # Verify that the CID is passed when it exists
         async with set_new_correlation_id() as correlation_id:
-            correlation_id = str(correlation_id)
+            cid_string = str(correlation_id)
             response = await client.get("/")
-            assert response.headers[CORRELATION_ID_HEADER_NAME] == correlation_id
-            assert response.json() == correlation_id
+            assert response.headers[CORRELATION_ID_HEADER_NAME] == cid_string
+            assert response.json() == cid_string
