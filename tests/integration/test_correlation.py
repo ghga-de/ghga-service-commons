@@ -27,7 +27,6 @@ from hexkit.correlation import (
     get_correlation_id,
     new_correlation_id,
     set_new_correlation_id,
-    validate_correlation_id,
 )
 
 from ghga_service_commons.api.api import (
@@ -207,7 +206,6 @@ async def test_async_client(generate_correlation_id: bool):
         correlation_id = correlation_id_from_str(
             request.headers[CORRELATION_ID_HEADER_NAME]
         )
-        validate_correlation_id(correlation_id)
         return correlation_id
 
     # Create an AsyncClient instance (NOT AsyncTestClient!)
@@ -230,7 +228,6 @@ async def test_async_client(generate_correlation_id: bool):
             correlation_id = correlation_id_from_str(
                 response.headers[CORRELATION_ID_HEADER_NAME]
             )
-            validate_correlation_id(correlation_id)
 
         # Verify that the CID is passed when it exists
         async with set_new_correlation_id() as correlation_id:

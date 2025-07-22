@@ -34,7 +34,6 @@ from hexkit.correlation import (
     correlation_id_from_str,
     new_correlation_id,
     set_correlation_id,
-    validate_correlation_id,
 )
 from pydantic import UUID4, Field
 from pydantic_settings import BaseSettings
@@ -193,7 +192,6 @@ def get_validated_correlation_id(
         log.debug("Generated new correlation id: %s", correlation_id)
     else:
         valid_correlation_id = correlation_id_from_str(correlation_id)
-        validate_correlation_id(valid_correlation_id)
     return valid_correlation_id
 
 
@@ -367,7 +365,7 @@ def configure_app(app: FastAPI, config: ApiConfigBase):
 
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(CorrelationIdMiddleware, config.generate_correlation_id)
-    app.add_middleware(CORSMiddleware, **kwargs)  # type: ignore[arg-type]
+    app.add_middleware(CORSMiddleware, **kwargs)
 
     # Configure the exception handler to issue error according to httpyexpect model:
     configure_exception_handler(app)
