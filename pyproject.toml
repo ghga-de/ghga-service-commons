@@ -53,7 +53,7 @@ dev = [
     "requests>=2.31, <3",
 ]
 objectstorage = [
-    "hexkit>=2, <7",
+    "hexkit>=6",
 ]
 all = [
     "ghga-service-commons[api,auth,crypt,dev,http,objectstorage]",
