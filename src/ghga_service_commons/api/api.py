@@ -365,7 +365,7 @@ def configure_app(app: FastAPI, config: ApiConfigBase):
 
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(CorrelationIdMiddleware, config.generate_correlation_id)
-    app.add_middleware(CORSMiddleware, **kwargs)
+    app.add_middleware(CORSMiddleware, **kwargs)  # type: ignore[arg-type]
 
     # Configure the exception handler to issue error according to httpyexpect model:
     configure_exception_handler(app)
