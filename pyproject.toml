@@ -34,7 +34,7 @@ text = "Apache 2.0"
 
 [project.optional-dependencies]
 api = [
-    "fastapi>=0.115.3, <0.116",
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.115.3, <0.117",
     "uvicorn[standard]>=0.34, <0.35",
     "ghga-service-commons[http,objectstorage]",
 ]
