@@ -22,8 +22,8 @@ eval "$(pyenv init -)"
 echo "$INIT_PYENV" >> ~/.profile
 echo "$INIT_PYENV" >> ~/.bashrc
 . ~/.profile
-pyenv install --skip-existing 3.9
-pyenv global system 3.9
+pyenv install --skip-existing 3.10
+pyenv global system 3.10
 EOF
 
 CMD ["sleep", "infinity"]
