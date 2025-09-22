@@ -21,9 +21,9 @@ from typing import Any
 
 import pytest
 from fastapi import status
-
 from ghga_auth.config import AUTH_KEY_PAIR, Config
 from ghga_auth.inject import prepare_rest_app
+
 from ghga_service_commons.api.testing import AsyncTestClient
 from ghga_service_commons.utils.jwt_helpers import sign_and_serialize_token
 

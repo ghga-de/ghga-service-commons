@@ -17,7 +17,6 @@
 """Test the core application."""
 
 import pytest
-
 from auth_demo.core import Hangout, HangoutConfig
 
 pytestmark = pytest.mark.asyncio

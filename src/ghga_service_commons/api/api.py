@@ -395,6 +395,7 @@ async def run_server(app: Union[FastAPI, str], config: ApiConfigBase):
         log_config=None,
         reload=config.auto_reload,
         workers=config.workers,
+        ws="websockets-sansio",
     )
 
     server = uvicorn.Server(uv_config)

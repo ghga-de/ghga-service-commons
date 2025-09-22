@@ -19,10 +19,10 @@
 import asyncio
 
 import pytest
-from fastapi import FastAPI, status
-
 from auth_demo.config import Config
 from auth_demo.inject import prepare_rest_app
+from fastapi import FastAPI, status
+
 from ghga_service_commons.api.testing import AsyncTestClient
 
 pytestmark = pytest.mark.asyncio
