@@ -21,7 +21,7 @@ See the auth_demo and ghga_auth examples for how to use these policies.
 
 from __future__ import annotations
 
-from typing import Callable
+from collections.abc import Callable
 
 from fastapi.exceptions import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials

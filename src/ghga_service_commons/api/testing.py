@@ -17,7 +17,8 @@
 """Functionality for testing FastAPI-based APIs."""
 
 import socket
-from typing import Any, Callable, Generic, TypeVar
+from collections.abc import Callable
+from typing import Any, Generic, TypeVar
 
 import httpx
 

@@ -16,8 +16,8 @@
 
 """Custom types and type aliases."""
 
-from collections.abc import Mapping
-from typing import Any, Callable, Literal, Protocol
+from collections.abc import Callable, Mapping
+from typing import Any, Literal, Protocol
 
 __all__ = [
     "ExceptionFactory",

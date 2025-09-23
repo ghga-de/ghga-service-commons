@@ -20,10 +20,11 @@ from __future__ import annotations
 import base64
 import io
 import os
+from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
 from tempfile import mkstemp
-from typing import Callable, NamedTuple, cast
+from typing import NamedTuple, cast
 
 import crypt4gh.header
 import crypt4gh.lib

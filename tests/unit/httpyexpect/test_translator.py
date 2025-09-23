@@ -16,8 +16,8 @@
 
 """Test the `translator` module."""
 
-from collections.abc import Sequence
-from typing import Callable, NamedTuple
+from collections.abc import Callable, Sequence
+from typing import NamedTuple
 from unittest.mock import Mock
 
 import pytest

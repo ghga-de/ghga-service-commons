@@ -18,9 +18,10 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from functools import partial
 from inspect import signature
-from typing import Any, Callable, Generic, TypeVar, cast, get_type_hints
+from typing import Any, Generic, TypeVar, cast, get_type_hints
 
 import httpx
 import pytest
