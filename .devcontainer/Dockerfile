@@ -1,6 +1,6 @@
-FROM mcr.microsoft.com/devcontainers/python:1-3.12-bookworm
+FROM mcr.microsoft.com/devcontainers/python:2.0.2-3.13-trixie
 
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 # Update args in docker-compose.yaml to set the UID/GID of the "vscode" user.
 ARG USER_UID=1000
@@ -22,8 +22,8 @@ eval "$(pyenv init -)"
 echo "$INIT_PYENV" >> ~/.profile
 echo "$INIT_PYENV" >> ~/.bashrc
 . ~/.profile
-pyenv install --skip-existing 3.9
-pyenv global system 3.9
+pyenv install --skip-existing 3.10
+pyenv global system 3.10
 EOF
 
 CMD ["sleep", "infinity"]

@@ -1,6 +1,6 @@
 [project]
 name = "ghga_service_commons"
-version = "5.0.0"
+version = "5.1.0"
 description = "A library that contains common functionality used in services of GHGA"
 readme = "README.md"
 authors = [
@@ -10,8 +10,8 @@ dependencies = ["pydantic >=2, <3"]
 
 [project.optional-dependencies]
 api = [
-    "fastapi>=0.115.3, <0.116",
-    "uvicorn[standard]>=0.34, <0.35",
+    "fastapi>=0.115.4, <0.118",
+    "uvicorn[standard]>=0.35, <0.37",
     "ghga-service-commons[http,objectstorage]",
 ]
 http = [
@@ -33,11 +33,10 @@ Repository = "https://github.com/ghga-de/ghga-service-commons"
 [tool.tox]
 legacy_tox_ini = """
     [tox]
-    env_list = py3{9,10,11,12,13}
+    env_list = py3{10,11,12,13}
 
     [gh-actions]
     python =
-        3.9: py39
         3.10: py310
         3.11: py311
         3.12: py312
