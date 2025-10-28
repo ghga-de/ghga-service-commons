@@ -1,0 +1,89 @@
+# Copyright 2021 - 2025 Universität Tübingen, DKFZ, EMBL, and Universität zu Köln
+# for the German Human Genome-Phenome Archive (GHGA)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Provides an httpx.AsyncTransport that handles rate limiting responses."""
+
+import asyncio
+import random
+from datetime import datetime, timezone
+from types import TracebackType
+from typing import Self
+
+import httpx
+
+from ghga_service_commons.transports.config import RatelimitingTransportConfig
+
+
+class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
+    """TODO"""
+
+    def __init__(
+        self, config: RatelimitingTransportConfig, transport: httpx.AsyncBaseTransport
+    ) -> None:
+        self._jitter = config.jitter
+        self._num_requests = 0
+        self._reset_after: int | None = config.reset_after
+        self._transport = transport
+        self._last_call_time = datetime.now(timezone.utc)
+        self._wait_time: float = 0
+
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        """
+        Handles HTTP requests while also implementing HTTP caching.
+
+        :param request: An HTTP request
+        :type request: httpx.Request
+        :return: An HTTP response
+        :rtype: httpx.Response
+        """
+        # Caculate seconds since the last request has been fired and corresponding wait time
+        time_elapsed = (self._last_call_time - datetime.now(timezone.utc)).seconds
+        remaining_wait = max(0, self._wait_time - time_elapsed)
+
+        # Add jitter to both cases and sleep
+        if remaining_wait < self._jitter:
+            await asyncio.sleep(random.uniform(remaining_wait, self._jitter))  # noqa: S311
+        else:
+            await asyncio.sleep(
+                random.uniform(remaining_wait, remaining_wait + self._jitter)  # noqa: S311
+            )
+
+        # Update timestamp and delegate call
+        self._last_call_time = datetime.now(timezone.utc)
+        response = await self._transport.handle_async_request(request=request)
+
+        # Update state
+        self._num_requests += 1
+        if response.status_code == 429:
+            self._wait_time = float(response.headers["Retry-After"])
+            self._num_requests = 0
+        elif self._reset_after and self._reset_after <= self._num_requests:
+            self._wait_time = 0
+            self._num_requests = 0
+        return response
+
+    async def aclose(self) -> None:
+        await self._transport.aclose()
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None = None,
+        exc_value: BaseException | None = None,
+        traceback: TracebackType | None = None,
+    ) -> None:
+        await self.aclose()
