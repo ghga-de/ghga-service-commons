@@ -18,12 +18,15 @@
 import asyncio
 import random
 from datetime import datetime, timezone
+from logging import getLogger
 from types import TracebackType
 from typing import Self
 
 import httpx
 
 from ghga_service_commons.transports.config import RatelimitingTransportConfig
+
+log = getLogger(__name__)
 
 
 class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
@@ -67,20 +70,27 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         # Update state
         self._num_requests += 1
         if response.status_code == 429:
-            self._wait_time = float(response.headers["Retry-After"])
+            retry_after = response.headers.get("Retry-After")
+            if retry_after:
+                self._wait_time = float(retry_after)
+            else:
+                log.warning(
+                    "Retry-After header not present in 429 response, using fallback instead."
+                )
+                self._wait_time = self._jitter
             self._num_requests = 0
         elif self._reset_after and self._reset_after <= self._num_requests:
             self._wait_time = 0
             self._num_requests = 0
         return response
 
-    async def aclose(self) -> None:
+    async def aclose(self) -> None:  # noqa: D102
         await self._transport.aclose()
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self) -> Self:  # noqa: D105
         return self
 
-    async def __aexit__(
+    async def __aexit__(  # noqa: D105
         self,
         exc_type: type[BaseException] | None = None,
         exc_value: BaseException | None = None,

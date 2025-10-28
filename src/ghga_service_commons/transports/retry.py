@@ -57,13 +57,13 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
         )
         return response
 
-    async def aclose(self) -> None:
+    async def aclose(self) -> None:  # noqa: D102
         await self._transport.aclose()
 
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self) -> Self:  # noqa: D105
         return self
 
-    async def __aexit__(
+    async def __aexit__(  # noqa: D105
         self,
         exc_type: type[BaseException] | None = None,
         exc_value: BaseException | None = None,
