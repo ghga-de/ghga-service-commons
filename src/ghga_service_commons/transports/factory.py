@@ -18,6 +18,7 @@
 from hishel import AsyncCacheTransport, AsyncInMemoryStorage
 from httpx import AsyncHTTPTransport
 
+from .config import CompositeCacheConfig, CompositeConfig
 from .ratelimiting import AsyncRatelimitingTransport
 from .retry import AsyncRetryTransport
 
@@ -26,7 +27,7 @@ class CompositeTransportFactory:
     """TODO"""
 
     @classmethod
-    def _create_common_transport_layers(cls, config, transport):
+    def _create_common_transport_layers(cls, config: CompositeConfig, transport):
         """TODO"""
         retry_transport = AsyncRetryTransport(config=config, transport=transport)
         ratelimiting_transport = AsyncRatelimitingTransport(
@@ -35,14 +36,16 @@ class CompositeTransportFactory:
         return ratelimiting_transport
 
     @classmethod
-    def create_ratelimiting_retry_transport(cls, config) -> AsyncRatelimitingTransport:
+    def create_ratelimiting_retry_transport(
+        cls, config: CompositeConfig
+    ) -> AsyncRatelimitingTransport:
         """TODO"""
         base_transport = AsyncHTTPTransport()
         return cls._create_common_transport_layers(config, base_transport)
 
     @classmethod
     def create_ratelimiting_retry_transport_with_cache(
-        cls, config
+        cls, config: CompositeCacheConfig
     ) -> AsyncRatelimitingTransport:
         """TODO"""
         base_transport = AsyncHTTPTransport()

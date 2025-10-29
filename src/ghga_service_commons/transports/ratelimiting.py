@@ -36,10 +36,10 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         self, config: RatelimitingTransportConfig, transport: httpx.AsyncBaseTransport
     ) -> None:
         self._jitter = config.jitter
-        self._num_requests = 0
-        self._reset_after: int | None = config.reset_after
         self._transport = transport
-        self._last_call_time = datetime.now(timezone.utc)
+        self._num_requests = 0
+        self._reset_after: int = config.reset_after
+        self._last_request_time = datetime.now(timezone.utc)
         self._wait_time: float = 0
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
@@ -52,7 +52,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         :rtype: httpx.Response
         """
         # Caculate seconds since the last request has been fired and corresponding wait time
-        time_elapsed = (self._last_call_time - datetime.now(timezone.utc)).seconds
+        time_elapsed = (self._last_request_time - datetime.now(timezone.utc)).seconds
         remaining_wait = max(0, self._wait_time - time_elapsed)
 
         # Add jitter to both cases and sleep
@@ -63,9 +63,9 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
                 random.uniform(remaining_wait, remaining_wait + self._jitter)  # noqa: S311
             )
 
-        # Update timestamp and delegate call
-        self._last_call_time = datetime.now(timezone.utc)
+        # Delegate call and update timestamp
         response = await self._transport.handle_async_request(request=request)
+        self._last_request_time = datetime.now(timezone.utc)
 
         # Update state
         self._num_requests += 1
@@ -73,6 +73,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
             retry_after = response.headers.get("Retry-After")
             if retry_after:
                 self._wait_time = float(retry_after)
+                log.info("Received retry after response: %.3f s", self._wait_time)
             else:
                 log.warning(
                     "Retry-After header not present in 429 response, using fallback instead."

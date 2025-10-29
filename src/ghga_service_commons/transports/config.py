@@ -36,10 +36,10 @@ class RatelimitingTransportConfig(BaseSettings):
     """TODO"""
 
     jitter: NonNegativeFloat = Field(
-        default=0.05, description="Max amoun of jitter to add to each request"
+        default=0.001, description="Max amount of jitter to add to each request"
     )
-    reset_after: int | None = Field(
-        default=None,
+    reset_after: int = Field(
+        default=1,
         description="Amount of requests after which the stored delay from a 429 response is ignored again. If set to `None`, it's never forgotten.",
     )
 
@@ -67,7 +67,5 @@ class CompositeConfig(RatelimitingTransportConfig, RetryTransportConfig):
     """TOOD"""
 
 
-class CompositeCacheConfig(
-    CacheTransportConfig, RatelimitingTransportConfig, RetryTransportConfig
-):
+class CompositeCacheConfig(CompositeConfig, CacheTransportConfig):
     """TOOD"""
