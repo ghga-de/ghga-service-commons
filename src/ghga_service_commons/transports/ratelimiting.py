@@ -53,20 +53,21 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         # Caculate seconds since the last request has been fired and corresponding wait time
         time_elapsed = time.monotonic() - self._last_request_time
         remaining_wait = max(0, self._wait_time - time_elapsed)
-        log.info("Configured base wait time: %.3f s", self._wait_time)
-        log.info(
-            "Time elapsed since last request:%.3f.\nWaiting for at least %.3f s",
+        log.debug(
+            "Time elapsed since last request: %.3f s.\nRemaining wait time: %.3f s.",
             time_elapsed,
             remaining_wait,
         )
 
         # Add jitter to both cases and sleep
         if remaining_wait < self._jitter:
-            time.sleep(random.uniform(remaining_wait, self._jitter))  # noqa: S311
+            sleep_for = random.uniform(remaining_wait, self._jitter)  # noqa: S311
+            log.debug("Sleeping for %.3f s.")
+            time.sleep(sleep_for)
         else:
-            time.sleep(
-                random.uniform(remaining_wait, remaining_wait + self._jitter)  # noqa: S311
-            )
+            sleep_for = random.uniform(remaining_wait, remaining_wait + self._jitter)  # noqa: S311
+            log.debug("Sleeping for %.3f s.")
+            time.sleep(sleep_for)
 
         # Delegate call and update timestamp
         response = await self._transport.handle_async_request(request=request)
@@ -79,12 +80,13 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
             retry_after = response.headers.get("Retry-After")
             if retry_after:
                 self._wait_time = float(retry_after)
-                log.info("Received retry after response: %.3f s", self._wait_time)
+                log.info("Received retry after response: %.3f s.", self._wait_time)
             else:
                 log.warning(
-                    "Retry-After header not present in 429 response, using fallback instead."
+                    "Retry-After header not present in 429 response.\nDelegating to underlying wait strategy."
                 )
-                self._wait_time = self._jitter
+                # Modify response headers to communicate intent to retry layer
+                response.headers["Should-Wait"] = "true"
             self._num_requests = 0
         elif self._reset_after and self._reset_after <= self._num_requests:
             self._wait_time = 0

@@ -63,7 +63,6 @@ def _log_retry_stats(retry_state: RetryCallState):
     if time_passed := retry_state.seconds_since_start:
         retry_stats["seconds_elapsed"] = round(time_passed, 3)
 
-    log.warning(retry_state.fn)
     log.info(
         "Retry attempt number %i for function %s.",
         attempt_number,
@@ -75,11 +74,13 @@ def _log_retry_stats(retry_state: RetryCallState):
 class wait_exponential_ignore_429(wait_exponential):  # noqa: N801
     """Custom exponential backof strategy not waiting on 429 responses"""
 
-    def __call__(self, retry_state: RetryCallState) -> float:  # noqa: D102
+    def __call__(self, retry_state: RetryCallState) -> float:
+        """Copied from base class and adjusted"""
         if (
             retry_state.outcome
             and (result := retry_state.outcome.result())
             and isinstance(result, httpx.Response)
+            and not result.headers.get("Should-Wait")
         ):
             return 0
         try:
