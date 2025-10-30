@@ -99,14 +99,14 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
         :return: An HTTP response
         :rtype: httpx.Response
         """
+        response = None
         try:
             response = await self._retry_handler(
                 fn=self._transport.handle_async_request, request=request
             )
         except tenacity.RetryError as exc:
             # get the actual latest response
-            if isinstance(exc, tenacity.Future):
-                response = exc.last_attempt.result()
+            response = exc.last_attempt.result()
         return response
 
     async def aclose(self) -> None:  # noqa: D102
