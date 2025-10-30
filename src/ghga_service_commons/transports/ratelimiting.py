@@ -54,6 +54,11 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         # Caculate seconds since the last request has been fired and corresponding wait time
         time_elapsed = (self._last_request_time - datetime.now(timezone.utc)).seconds
         remaining_wait = max(0, self._wait_time - time_elapsed)
+        log.info(
+            "Time elapsed since last request:%.3f.\nWaiting for at least %.3f s",
+            time_elapsed,
+            remaining_wait,
+        )
 
         # Add jitter to both cases and sleep
         if remaining_wait < self._jitter:
