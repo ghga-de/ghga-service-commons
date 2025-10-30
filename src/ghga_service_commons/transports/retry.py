@@ -105,7 +105,8 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
                 fn=self._transport.handle_async_request, request=request
             )
         except tenacity.RetryError as exc:
-            # actual wrapped responsed don't show up correctly, need to set this manually
+            # last_attempt is potentially an unawaited future, need to explicitly reraise
+            # to get the correct innter instance displayed
             exc.reraise()
         return response
 
