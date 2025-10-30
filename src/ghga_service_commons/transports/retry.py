@@ -38,7 +38,7 @@ log = getLogger(__name__)
 
 def _default_wait_strategy(config: RetryTransportConfig):
     """TODO"""
-    return wait_exponential(max=config.max_retries)
+    return wait_exponential_ignore_429(max=config.max_retries)
 
 
 def _default_stop_strategy(config: RetryTransportConfig):
@@ -69,6 +69,24 @@ def _log_retry_stats(retry_state: RetryCallState):
         function_name,
         extra=retry_stats,
     )
+
+
+class wait_exponential_ignore_429(wait_exponential):  # noqa: N801
+    """Custom exponential backof strategy not waiting on 429 responses"""
+
+    def __call__(self, retry_state: "RetryCallState") -> float:  # noqa: D102
+        if (
+            retry_state.outcome
+            and (result := retry_state.outcome.result())
+            and isinstance(result, httpx.Response)
+        ):
+            return 0
+        try:
+            exp = self.exp_base ** (retry_state.attempt_number - 1)
+            result = self.multiplier * exp
+        except OverflowError:
+            return self.max
+        return max(max(0, self.min), min(result, self.max))
 
 
 class AsyncRetryTransport(httpx.AsyncBaseTransport):
