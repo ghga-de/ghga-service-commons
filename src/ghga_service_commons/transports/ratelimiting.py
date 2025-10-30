@@ -15,7 +15,6 @@
 
 """Provides an httpx.AsyncTransport that handles rate limiting responses."""
 
-import asyncio
 import random
 import time
 from logging import getLogger
@@ -63,9 +62,9 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
 
         # Add jitter to both cases and sleep
         if remaining_wait < self._jitter:
-            await asyncio.sleep(random.uniform(remaining_wait, self._jitter))  # noqa: S311
+            time.sleep(random.uniform(remaining_wait, self._jitter))  # noqa: S311
         else:
-            await asyncio.sleep(
+            time.sleep(
                 random.uniform(remaining_wait, remaining_wait + self._jitter)  # noqa: S311
             )
 
