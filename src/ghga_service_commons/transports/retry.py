@@ -74,7 +74,7 @@ def _log_retry_stats(retry_state: RetryCallState):
 class wait_exponential_ignore_429(wait_exponential):  # noqa: N801
     """Custom exponential backof strategy not waiting on 429 responses"""
 
-    def __call__(self, retry_state: "RetryCallState") -> float:  # noqa: D102
+    def __call__(self, retry_state: RetryCallState) -> float:  # noqa: D102
         if (
             retry_state.outcome
             and (result := retry_state.outcome.result())

@@ -52,7 +52,8 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         """
         # Caculate seconds since the last request has been fired and corresponding wait time
         time_elapsed = time.monotonic() - self._last_request_time
-        remaining_wait = max(0, self._wait_time - time_elapsed)
+        # remaining_wait = max(0, self._wait_time - time_elapsed)
+        remaining_wait = self._wait_time - time_elapsed
         log.info("Configured base wait time: %.3f s", self._wait_time)
         log.info(
             "Time elapsed since last request:%.3f.\nWaiting for at least %.3f s",
@@ -71,6 +72,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         # Delegate call and update timestamp
         response = await self._transport.handle_async_request(request=request)
         self._last_request_time = time.monotonic()
+        log.info("Last request fired at: %.3f", self._last_request_time)
 
         # Update state
         self._num_requests += 1
