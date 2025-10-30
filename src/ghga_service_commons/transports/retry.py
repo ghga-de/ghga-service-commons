@@ -63,6 +63,7 @@ def _log_retry_stats(retry_state: RetryCallState):
     if time_passed := retry_state.seconds_since_start:
         retry_stats["seconds_elapsed"] = round(time_passed, 3)
 
+    log.warning(retry_state.fn)
     log.info(
         "Retry attempt number %i for function %s.",
         attempt_number,
