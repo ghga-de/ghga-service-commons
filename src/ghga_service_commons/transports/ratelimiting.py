@@ -52,8 +52,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         """
         # Caculate seconds since the last request has been fired and corresponding wait time
         time_elapsed = time.monotonic() - self._last_request_time
-        # remaining_wait = max(0, self._wait_time - time_elapsed)
-        remaining_wait = self._wait_time - time_elapsed
+        remaining_wait = max(0, self._wait_time - time_elapsed)
         log.info("Configured base wait time: %.3f s", self._wait_time)
         log.info(
             "Time elapsed since last request:%.3f.\nWaiting for at least %.3f s",
@@ -90,6 +89,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         elif self._reset_after and self._reset_after <= self._num_requests:
             self._wait_time = 0
             self._num_requests = 0
+
         return response
 
     async def aclose(self) -> None:  # noqa: D102
