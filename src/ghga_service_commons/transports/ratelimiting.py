@@ -52,7 +52,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         :rtype: httpx.Response
         """
         # Caculate seconds since the last request has been fired and corresponding wait time
-        time_elapsed = (self._last_request_time - datetime.now(timezone.utc)).seconds
+        time_elapsed = (datetime.now(timezone.utc) - self._last_request_time).seconds
         remaining_wait = max(0, self._wait_time - time_elapsed)
         log.info(
             "Time elapsed since last request:%.3f.\nWaiting for at least %.3f s",
