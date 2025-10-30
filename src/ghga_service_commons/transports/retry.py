@@ -106,7 +106,7 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
             )
         except RetryError as exc:
             if isinstance(exc.last_attempt, tenacity.Future):
-                raise ValueError(exc.last_attempt.result()) from exc
+                raise exc.last_attempt.result() from exc
         return response
 
     async def aclose(self) -> None:  # noqa: D102
