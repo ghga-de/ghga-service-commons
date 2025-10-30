@@ -105,8 +105,8 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
                 fn=self._transport.handle_async_request, request=request
             )
         except tenacity.RetryError as exc:
-            # get the actual latest response
-            response = exc.last_attempt.result()
+            # actual wrapped responsed don't show up correctly, need to set this manually
+            exc.reraise()
         return response
 
     async def aclose(self) -> None:  # noqa: D102
