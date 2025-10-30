@@ -29,16 +29,18 @@ class CompositeTransportFactory:
     @classmethod
     def _create_common_transport_layers(cls, config: CompositeConfig, transport):
         """TODO"""
-        retry_transport = AsyncRetryTransport(config=config, transport=transport)
         ratelimiting_transport = AsyncRatelimitingTransport(
-            config=config, transport=retry_transport
+            config=config, transport=transport
         )
-        return ratelimiting_transport
+        retry_transport = AsyncRetryTransport(
+            config=config, transport=ratelimiting_transport
+        )
+        return retry_transport
 
     @classmethod
     def create_ratelimiting_retry_transport(
         cls, config: CompositeConfig, limits: Limits | None = None
-    ) -> AsyncRatelimitingTransport:
+    ) -> AsyncRetryTransport:
         """TODO"""
         base_transport = (
             AsyncHTTPTransport(limits=limits) if limits else AsyncHTTPTransport()
@@ -48,7 +50,7 @@ class CompositeTransportFactory:
     @classmethod
     def create_ratelimiting_retry_transport_with_cache(
         cls, config: CompositeCacheConfig, limits: Limits | None = None
-    ) -> AsyncRatelimitingTransport:
+    ) -> AsyncRetryTransport:
         """TODO"""
         base_transport = (
             AsyncHTTPTransport(limits=limits) if limits else AsyncHTTPTransport()
