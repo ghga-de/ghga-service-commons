@@ -15,9 +15,10 @@
 
 """Provides an httpx.AsyncTransport that handles retrying requests on failure."""
 
+from collections.abc import Callable
 from logging import getLogger
 from types import TracebackType
-from typing import Self
+from typing import Any, Self
 
 import httpx
 from tenacity import (
@@ -34,14 +35,59 @@ from ghga_service_commons.transports.config import RetryTransportConfig
 log = getLogger(__name__)
 
 
+def _default_wait_strategy(config: RetryTransportConfig):
+    """TODO"""
+    return wait_exponential(max=config.max_retries)
+
+
+def _default_stop_strategy(config: RetryTransportConfig):
+    """TODO"""
+    return stop_after_attempt(config.max_retries)
+
+
+def _log_retry_stats(retry_state: RetryCallState):
+    """TODO"""
+    if not retry_state.fn:
+        log.debug("No wrapped function found in retry state.")
+        return
+
+    function_name = retry_state.fn.__qualname__
+    attempt_number = retry_state.attempt_number
+
+    retry_stats = {
+        "function_name": function_name,
+        "attempt_number": attempt_number,
+    }
+
+    if time_passed := retry_state.seconds_since_start:
+        retry_stats["seconds_elapsed"] = round(time_passed, 3)
+
+    log.info(
+        "Retry attempt number %i for function %s.",
+        attempt_number,
+        function_name,
+        extra=retry_stats,
+    )
+
+
 class AsyncRetryTransport(httpx.AsyncBaseTransport):
     """TODO"""
 
     def __init__(
-        self, config: RetryTransportConfig, transport: httpx.AsyncBaseTransport
+        self,
+        config: RetryTransportConfig,
+        transport: httpx.AsyncBaseTransport,
+        wait_strategy: Callable[[RetryTransportConfig], Any] = _default_wait_strategy,
+        stop_strategy: Callable[[RetryTransportConfig], Any] = _default_stop_strategy,
+        stats_logger: Callable[[RetryCallState], Any] = _log_retry_stats,
     ) -> None:
         self._transport = transport
-        self._retry_handler = _configure_retry_handler(config)
+        self._retry_handler = _configure_retry_handler(
+            config,
+            wait_strategy=wait_strategy,
+            stop_strategy=stop_strategy,
+            stats_logger=stats_logger,
+        )
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """
@@ -72,7 +118,12 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
         await self.aclose()
 
 
-def _configure_retry_handler(config: RetryTransportConfig):
+def _configure_retry_handler(
+    config: RetryTransportConfig,
+    wait_strategy: Callable[[RetryTransportConfig], Any],
+    stop_strategy: Callable[[RetryTransportConfig], Any],
+    stats_logger: Callable[[RetryCallState], Any],
+):
     """TODO"""
     return AsyncRetrying(
         reraise=True,
@@ -88,32 +139,7 @@ def _configure_retry_handler(config: RetryTransportConfig):
                 lambda response: response.status_code in config.retry_status_codes
             )
         ),
-        stop=stop_after_attempt(config.max_retries),
-        wait=wait_exponential(max=config.exponential_backoff_max),
-        after=_log_retry_stats if config.log_retries else lambda _: None,
-    )
-
-
-def _log_retry_stats(retry_state: RetryCallState):
-    """TODO"""
-    if not retry_state.fn:
-        log.debug("No wrapped function found in retry state.")
-        return
-
-    function_name = retry_state.fn.__qualname__
-    attempt_number = retry_state.attempt_number
-
-    retry_stats = {
-        "function_name": function_name,
-        "attempt_number": attempt_number,
-    }
-
-    if time_passed := retry_state.seconds_since_start:
-        retry_stats["seconds_elapsed"] = round(time_passed, 3)
-
-    log.info(
-        "Retry attempt number %i for function %s.",
-        attempt_number,
-        function_name,
-        extra=retry_stats,
+        stop=stop_strategy(config),
+        wait=wait_strategy(config),
+        after=stats_logger if config.log_retries else lambda _: None,
     )
