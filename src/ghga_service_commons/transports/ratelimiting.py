@@ -72,7 +72,6 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         # Delegate call and update timestamp
         response = await self._transport.handle_async_request(request=request)
         self._last_request_time = time.monotonic()
-        log.info("Last request fired at: %.3f", self._last_request_time)
 
         # Update state
         self._num_requests += 1
