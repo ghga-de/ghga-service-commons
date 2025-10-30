@@ -17,7 +17,7 @@
 
 import asyncio
 import random
-from datetime import datetime, timezone
+import time
 from logging import getLogger
 from types import TracebackType
 from typing import Self
@@ -39,7 +39,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         self._transport = transport
         self._num_requests = 0
         self._reset_after: int = config.reset_after
-        self._last_request_time = datetime.now(timezone.utc)
+        self._last_request_time = time.monotonic()
         self._wait_time: float = 0
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
@@ -52,7 +52,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         :rtype: httpx.Response
         """
         # Caculate seconds since the last request has been fired and corresponding wait time
-        time_elapsed = (datetime.now(timezone.utc) - self._last_request_time).seconds
+        time_elapsed = time.monotonic() - self._last_request_time
         remaining_wait = max(0, self._wait_time - time_elapsed)
         log.info(
             "Time elapsed since last request:%.3f.\nWaiting for at least %.3f s",
@@ -70,7 +70,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
 
         # Delegate call and update timestamp
         response = await self._transport.handle_async_request(request=request)
-        self._last_request_time = datetime.now(timezone.utc)
+        self._last_request_time = time.monotonic()
 
         # Update state
         self._num_requests += 1
