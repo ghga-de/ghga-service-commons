@@ -168,5 +168,5 @@ def _configure_retry_handler(
         ),
         stop=stop_strategy(config),
         wait=wait_strategy(config),
-        after=stats_logger if config.log_retries else lambda _: None,
+        after=stats_logger,
     )
