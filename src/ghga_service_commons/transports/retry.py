@@ -38,7 +38,7 @@ log = getLogger(__name__)
 
 def _default_wait_strategy(config: RetryTransportConfig):
     """TODO"""
-    return wait_exponential_ignore_429(max=config.max_retries)
+    return wait_exponential_ignore_429(max=config.exponential_backoff_max)
 
 
 def _default_stop_strategy(config: RetryTransportConfig):
@@ -87,7 +87,7 @@ class wait_exponential_ignore_429(wait_exponential):  # noqa: N801
             exp = self.exp_base ** (retry_state.attempt_number - 1)
             result = self.multiplier * exp
         except OverflowError:
-            return self.max
+            result = self.max
         return max(max(0, self.min), min(result, self.max))
 
 
