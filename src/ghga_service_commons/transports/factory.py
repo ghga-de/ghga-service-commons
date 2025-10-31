@@ -47,7 +47,7 @@ class CompositeTransportFactory:
         cls, config: CompositeConfig, limits: Limits | None = None
     ) -> AsyncRetryTransport:
         """TODO"""
-        return cls._create_common_transport_layers(config)
+        return cls._create_common_transport_layers(config, limits=limits)
 
     @classmethod
     def create_ratelimiting_retry_transport_with_cache(
@@ -55,5 +55,5 @@ class CompositeTransportFactory:
     ) -> AsyncCacheTransport:
         """TODO"""
         storage = AsyncInMemoryStorage(ttl=config.cache_ttl)
-        retry_transport = cls._create_common_transport_layers(config)
+        retry_transport = cls._create_common_transport_layers(config, limits=limits)
         return AsyncCacheTransport(transport=retry_transport, storage=storage)

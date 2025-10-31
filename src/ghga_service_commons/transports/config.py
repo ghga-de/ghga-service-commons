@@ -13,14 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""TODO"""
+"""Contains common configuration for different composite async httpx Transports."""
 
 from pydantic import Field, NonNegativeFloat, NonNegativeInt, PositiveInt
 from pydantic_settings import BaseSettings
 
 
 class CacheTransportConfig(BaseSettings):
-    """TODO"""
+    """Configuration options for the storage used in the caching transport.
+
+    Currently only in memory storage is available.
+    """
 
     cache_ttl: NonNegativeInt = Field(
         default=60,
@@ -33,26 +36,25 @@ class CacheTransportConfig(BaseSettings):
 
 
 class RatelimitingTransportConfig(BaseSettings):
-    """TODO"""
+    """Configuration options TODO"""
 
     jitter: NonNegativeFloat = Field(
-        default=0.001, description="Max amount of jitter to add to each request"
+        default=0.001,
+        description="Max amount of jitter (in seconds) to add to each request.",
     )
-    reset_after: int = Field(
+    reset_after: PositiveInt = Field(
         default=1,
-        description="Amount of requests after which the stored delay from a 429 response is ignored again. If set to `None`, it's never forgotten.",
+        description="Amount of requests after which the stored delay from a 429 response is ignored again. "
+        + "Can be useful to adjust if concurrent requests are fired in quick succession.",
     )
 
 
 class RetryTransportConfig(BaseSettings):
-    """TODO"""
+    """Confifuration options TODO"""
 
     exponential_backoff_max: NonNegativeInt = Field(
         default=60,
         description="Maximum number of seconds to wait for when using exponential backoff retry strategies.",
-    )
-    log_retries: bool = Field(
-        default=False, description="If true, retry informtion will be logged"
     )
     max_retries: NonNegativeInt = Field(
         default=3, description="Number of times to retry failed API calls."
@@ -64,8 +66,8 @@ class RetryTransportConfig(BaseSettings):
 
 
 class CompositeConfig(RatelimitingTransportConfig, RetryTransportConfig):
-    """TOOD"""
+    """Configuration for a transport providing both retry and rate limiting logic."""
 
 
 class CompositeCacheConfig(CompositeConfig, CacheTransportConfig):
-    """TOOD"""
+    """Configuration for a transport providing retry, rate limiting and caching logic."""
