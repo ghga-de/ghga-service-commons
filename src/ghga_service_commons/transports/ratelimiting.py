@@ -76,9 +76,12 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         # Update state
         self._num_requests += 1
         if response.status_code == 429:
-            retry_after = response.headers.get("Retry-After")
+            retry_after = 0.0
+            for k, v in response.headers.items():
+                if k.lower() == "retry-after":
+                    retry_after = float(v)
             if retry_after:
-                self._wait_time = float(retry_after)
+                self._wait_time = retry_after
                 log.info("Received retry after response: %.3f s.", self._wait_time)
             else:
                 log.warning(
