@@ -36,7 +36,7 @@ class CacheTransportConfig(BaseSettings):
 
 
 class RatelimitingTransportConfig(BaseSettings):
-    """Configuration options TODO"""
+    """Configuration options for a rate limiting HTTPTransport."""
 
     jitter: NonNegativeFloat = Field(
         default=0.001,
@@ -50,11 +50,12 @@ class RatelimitingTransportConfig(BaseSettings):
 
 
 class RetryTransportConfig(BaseSettings):
-    """Confifuration options TODO"""
+    """Confifuration options for an HTTPTransport providing retry logic."""
 
     exponential_backoff_max: NonNegativeInt = Field(
         default=60,
-        description="Maximum number of seconds to wait for when using exponential backoff retry strategies.",
+        description="Maximum number of seconds to wait between retries when using"
+        + "exponential backoff retry strategies. The client timeout might need to be adjusted accoringly.",
     )
     max_retries: NonNegativeInt = Field(
         default=3, description="Number of times to retry failed API calls."

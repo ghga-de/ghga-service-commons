@@ -24,13 +24,13 @@ from .retry import AsyncRetryTransport
 
 
 class CompositeTransportFactory:
-    """TODO"""
+    """Produces different flavors of httpx.AsyncHTTPTransports and takes care of wrapping them in the correct order."""
 
     @classmethod
     def _create_common_transport_layers(
         cls, config: CompositeConfig, limits: Limits | None = None
     ):
-        """TODO"""
+        """Creates wrapped transports reused between different factory methods."""
         base_transport = (
             AsyncHTTPTransport(limits=limits) if limits else AsyncHTTPTransport()
         )
@@ -46,14 +46,14 @@ class CompositeTransportFactory:
     def create_ratelimiting_retry_transport(
         cls, config: CompositeConfig, limits: Limits | None = None
     ) -> AsyncRetryTransport:
-        """TODO"""
+        """Creates a retry transport, wrapping a rate limiting transport, wrapping an AsyncHTTPTransport."""
         return cls._create_common_transport_layers(config, limits=limits)
 
     @classmethod
     def create_ratelimiting_retry_transport_with_cache(
         cls, config: CompositeCacheConfig, limits: Limits | None = None
     ) -> AsyncCacheTransport:
-        """TODO"""
+        """Creates a retry transport, wrapping a rate limiting transport, wrapping a cache transport, wrapping an AsyncHTTPTransport."""
         storage = AsyncInMemoryStorage(ttl=config.cache_ttl)
         retry_transport = cls._create_common_transport_layers(config, limits=limits)
         return AsyncCacheTransport(transport=retry_transport, storage=storage)

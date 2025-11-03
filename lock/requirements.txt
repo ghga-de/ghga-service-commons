@@ -791,9 +791,9 @@ urllib3==2.5.0 \
     # via
     #   -c lock/requirements-dev.txt
     #   requests
-uvicorn==0.36.1 \
-    --hash=sha256:048e68f2a0fe291cd848ed076f18c026e1b0bc69991495f087634ac9a41e8706 \
-    --hash=sha256:059086ecb470a021553f17bf860fce2095611d92fb8b669c44325b3435a0a654
+uvicorn==0.38.0 \
+    --hash=sha256:48c0afd214ceb59340075b4a052ea1ee91c16fbc2a9b1469cca0e54566977b02 \
+    --hash=sha256:fd97093bdd120a2609fc0d3afe931d4d4ad688b6e75f0f929fde1bc36fe0e91d
     # via
     #   -c lock/requirements-dev.txt
     #   ghga-service-commons (pyproject.toml)

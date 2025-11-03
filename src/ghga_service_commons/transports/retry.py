@@ -37,17 +37,17 @@ log = getLogger(__name__)
 
 
 def _default_wait_strategy(config: RetryTransportConfig):
-    """TODO"""
+    """Wait strategy using exponential backoff, not waiting for 429 responses."""
     return wait_exponential_ignore_429(max=config.exponential_backoff_max)
 
 
 def _default_stop_strategy(config: RetryTransportConfig):
-    """TODO"""
+    """Basic stop strategy aborting retrying after a configured number of attempts."""
     return stop_after_attempt(config.max_retries)
 
 
 def _log_retry_stats(retry_state: RetryCallState):
-    """TODO"""
+    """Basic logger printing high level stats after each retry attempt."""
     if not retry_state.fn:
         log.debug("No wrapped function found in retry state.")
         return
@@ -55,13 +55,11 @@ def _log_retry_stats(retry_state: RetryCallState):
     function_name = retry_state.fn.__qualname__
     attempt_number = retry_state.attempt_number
 
-    retry_stats = {
-        "function_name": function_name,
-        "attempt_number": attempt_number,
-    }
+    retry_stats = {"function_name": function_name}
 
-    if time_passed := retry_state.seconds_since_start:
-        retry_stats["seconds_elapsed"] = round(time_passed, 3)
+    # Additionally get internal statistics from the current retry object
+    internal_stats = retry_state.retry_object.statistics
+    retry_stats |= internal_stats
 
     log.info(
         "Retry attempt number %i for function %s.",
@@ -72,14 +70,19 @@ def _log_retry_stats(retry_state: RetryCallState):
 
 
 class wait_exponential_ignore_429(wait_exponential):  # noqa: N801
-    """Custom exponential backof strategy not waiting on 429 responses"""
+    """Custom exponential backoff strategy not waiting for 429 responses.
+
+    429 responses need to set the `Should-Wait` header to signal to fall back to using
+    exponential backoff.
+    """
 
     def __call__(self, retry_state: RetryCallState) -> float:
-        """Copied from base class and adjusted"""
+        """Copied from base class and adjusted."""
         if (
             retry_state.outcome
             and (result := retry_state.outcome.result())
             and isinstance(result, httpx.Response)
+            and result.status_code == 429
             and not result.headers.get("Should-Wait")
         ):
             return 0
@@ -92,7 +95,13 @@ class wait_exponential_ignore_429(wait_exponential):  # noqa: N801
 
 
 class AsyncRetryTransport(httpx.AsyncBaseTransport):
-    """TODO"""
+    """Custom async Transport adding retry logic on top of AsyncHTTPTransport.
+
+    This adds tenacity based retry logic around HTTP calls.
+    Custom wait and stop strategies and logging after each attempt can be injected.
+    The default wait strategy uses and exponential backoff, but ignores 429 responses,
+    so their retry-after header can be dealt with corrctly, if present.
+    """
 
     def __init__(
         self,
@@ -151,7 +160,7 @@ def _configure_retry_handler(
     stop_strategy: Callable[[RetryTransportConfig], Any],
     stats_logger: Callable[[RetryCallState], Any],
 ):
-    """TODO"""
+    """Configure the AsyncRetrying instance that is used for handling retryable responses/exceptions."""
     return AsyncRetrying(
         reraise=True,
         retry=(

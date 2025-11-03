@@ -29,7 +29,16 @@ log = getLogger(__name__)
 
 
 class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
-    """TODO"""
+    """Custom async Transport adding rate limiting handling on top of AsyncHTTPTransport.
+
+    If no retry-after header is found in the 429 response, this hands control back to the
+    caller and populates a `Should-Wait` header to signal that a custom wait/retry strategy
+    is needed.
+    Can be configured to add some jitter in between requests and carry over the wait time
+    of a 429 retry-after response for a configurable number of requests.
+    Both can be helpful in a situation when concurrent requests are fired in rapid succession
+    and might overwhelm the request endpoint.
+    """
 
     def __init__(
         self, config: RatelimitingTransportConfig, transport: httpx.AsyncBaseTransport
@@ -42,14 +51,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         self._wait_time: float = 0
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
-        """
-        Handles HTTP requests while also implementing HTTP caching.
-
-        :param request: An HTTP request
-        :type request: httpx.Request
-        :return: An HTTP response
-        :rtype: httpx.Response
-        """
+        """Handles HTTP requests and adds wait logic for HTTP 429 responses around calls."""
         # Caculate seconds since the last request has been fired and corresponding wait time
         time_elapsed = time.monotonic() - self._last_request_time
         remaining_wait = max(0, self._wait_time - time_elapsed)
