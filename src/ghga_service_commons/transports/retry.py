@@ -120,14 +120,7 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
         )
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
-        """
-        Handles HTTP requests while also implementing HTTP caching.
-
-        :param request: An HTTP request
-        :type request: httpx.Request
-        :return: An HTTP response
-        :rtype: httpx.Response
-        """
+        """Handles HTTP requests and adds retry logic around calls."""
         response = None
         try:
             response = await self._retry_handler(
