@@ -15,6 +15,7 @@
 
 """Provides an httpx.AsyncTransport that handles retrying requests on failure."""
 
+import time
 from collections.abc import Callable
 from logging import getLogger
 from types import TracebackType
@@ -55,17 +56,28 @@ def _log_retry_stats(retry_state: RetryCallState):
     function_name = retry_state.fn.__qualname__
     attempt_number = retry_state.attempt_number
 
-    retry_stats = {"function_name": function_name}
+    # Get internal statistics from the current retry object
+    stats = retry_state.retry_object.statistics
+    stats["function_name"] = function_name
+    stats["time_elapsed"] = round(time.monotonic() - stats["start_time"], 3)
+    stats["start_time"] = round(stats["start_time"], 3)
+    stats["idle_for"] = round(stats["idle_for"], 3)
 
-    # Additionally get internal statistics from the current retry object
-    internal_stats = retry_state.retry_object.statistics
-    retry_stats |= internal_stats
+    # Enrich with details from current attempt for debugging
+    if outcome := retry_state.outcome:
+        result = outcome.result()
+        if isinstance(result, httpx.Response):
+            stats["response_status_code"] = result.status_code
+            stats["response_headers"] = result.headers
+        elif isinstance(result, Exception):
+            stats["excepion_type"] = type(result)
+            stats["excepion_message"] = str(result)
 
     log.info(
         "Retry attempt number %i for function %s.",
         attempt_number,
         function_name,
-        extra=retry_stats,
+        extra=stats,
     )
 
 
