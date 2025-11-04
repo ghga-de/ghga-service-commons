@@ -1,6 +1,6 @@
 [project]
 name = "ghga_service_commons"
-version = "5.1.0"
+version = "5.2.0"
 description = "A library that contains common functionality used in services of GHGA"
 readme = "README.md"
 authors = [
@@ -10,7 +10,7 @@ dependencies = ["pydantic >=2, <3"]
 
 [project.optional-dependencies]
 api = [
-    "fastapi>=0.115.4, <0.118",
+    "fastapi>=0.115.4, <0.121",
     "uvicorn[standard]>=0.35, <0.37",
     "ghga-service-commons[http,objectstorage]",
 ]
