@@ -47,13 +47,13 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
         self._transport = transport
         self._num_requests = 0
         self._reset_after: int = config.reset_after
-        self._last_request_time = time.monotonic()
+        self._last_retry_after_received: float = 0
         self._wait_time: float = 0
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Handles HTTP requests and adds wait logic for HTTP 429 responses around calls."""
         # Caculate seconds since the last request has been fired and corresponding wait time
-        time_elapsed = time.monotonic() - self._last_request_time
+        time_elapsed = time.monotonic() - self._last_retry_after_received
         remaining_wait = max(0, self._wait_time - time_elapsed)
         log.debug(
             "Time elapsed since last request: %.3f s.\nRemaining wait time: %.3f s.",
@@ -73,7 +73,6 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
 
         # Delegate call and update timestamp
         response = await self._transport.handle_async_request(request=request)
-        self._last_request_time = time.monotonic()
 
         # Update state
         self._num_requests += 1
@@ -85,6 +84,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
             if retry_after:
                 self._wait_time = retry_after
                 log.info("Received retry after response: %.3f s.", self._wait_time)
+                self._last_retry_after_received = time.monotonic()
             else:
                 log.warning(
                     "Retry-After header not present in 429 response.\nDelegating to underlying wait strategy."
