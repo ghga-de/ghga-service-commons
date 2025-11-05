@@ -50,7 +50,7 @@ class RatelimitingTransportConfig(BaseSettings):
 
 
 class RetryTransportConfig(BaseSettings):
-    """Confifuration options for an HTTPTransport providing retry logic."""
+    """Configuration options for an HTTPTransport providing retry logic."""
 
     exponential_backoff_max: NonNegativeInt = Field(
         default=60,
