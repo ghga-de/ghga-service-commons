@@ -66,7 +66,7 @@ class RetryTransportConfig(BaseSettings):
     )
 
 
-class CompositeConfig(RatelimitingTransportConfig, RetryTransportConfig):
+class CompositeConfig(RateLimitingTransportConfig, RetryTransportConfig):
     """Configuration for a transport providing both retry and rate limiting logic."""
 
 

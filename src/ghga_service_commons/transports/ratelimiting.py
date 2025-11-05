@@ -24,7 +24,7 @@ from typing import Self
 
 import httpx
 
-from ghga_service_commons.transports.config import RatelimitingTransportConfig
+from ghga_service_commons.transports.config import RateLimitingTransportConfig
 
 log = getLogger(__name__)
 
@@ -42,7 +42,7 @@ class AsyncRateLimitingTransport(httpx.AsyncBaseTransport):
     """
 
     def __init__(
-        self, config: RatelimitingTransportConfig, transport: httpx.AsyncBaseTransport
+        self, config: RateLimitingTransportConfig, transport: httpx.AsyncBaseTransport
     ) -> None:
         self._jitter = config.jitter
         self._transport = transport

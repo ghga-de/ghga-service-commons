@@ -19,7 +19,7 @@ from hishel import AsyncCacheTransport, AsyncInMemoryStorage
 from httpx import AsyncHTTPTransport, Limits
 
 from .config import CompositeCacheConfig, CompositeConfig
-from .ratelimiting import AsyncRatelimitingTransport
+from .ratelimiting import AsyncRateLimitingTransport
 from .retry import AsyncRetryTransport
 
 
@@ -34,7 +34,7 @@ class CompositeTransportFactory:
         base_transport = (
             AsyncHTTPTransport(limits=limits) if limits else AsyncHTTPTransport()
         )
-        ratelimiting_transport = AsyncRatelimitingTransport(
+        ratelimiting_transport = AsyncRateLimitingTransport(
             config=config, transport=base_transport
         )
         retry_transport = AsyncRetryTransport(
