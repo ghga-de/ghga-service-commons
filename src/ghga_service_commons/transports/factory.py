@@ -50,7 +50,7 @@ class CompositeTransportFactory:
         return cls._create_common_transport_layers(config, limits=limits)
 
     @classmethod
-    def create_ratelimiting_retry_transport_with_cache(
+    def create_cached_ratelimiting_retry_transport(
         cls, config: CompositeCacheConfig, limits: Limits | None = None
     ) -> AsyncCacheTransport:
         """Creates a retry transport, wrapping a rate limiting transport, wrapping a cache transport, wrapping an AsyncHTTPTransport."""
