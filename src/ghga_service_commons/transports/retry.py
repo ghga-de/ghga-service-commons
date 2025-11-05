@@ -70,8 +70,8 @@ def _log_retry_stats(retry_state: RetryCallState):
             stats["response_status_code"] = result.status_code
             stats["response_headers"] = result.headers
         elif isinstance(result, Exception):
-            stats["excepion_type"] = type(result)
-            stats["excepion_message"] = str(result)
+            stats["exception_type"] = type(result)
+            stats["exception_message"] = str(result)
 
     log.info(
         "Retry attempt number %i for function %s.",
