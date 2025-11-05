@@ -39,7 +39,7 @@ class RateLimitingTransportConfig(BaseSettings):
     """Configuration options for a rate limiting HTTPTransport."""
 
     jitter: NonNegativeFloat = Field(
-        default=0.001,
+        default=0.0,
         description="Max amount of jitter (in seconds) to add to each request.",
     )
     reset_after: PositiveInt = Field(
