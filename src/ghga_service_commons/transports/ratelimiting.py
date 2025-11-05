@@ -52,7 +52,7 @@ class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Handles HTTP requests and adds wait logic for HTTP 429 responses around calls."""
-        # Caculate seconds since the last request has been fired and corresponding wait time
+        # Calculate seconds since the last request has been fired and corresponding wait time
         time_elapsed = time.monotonic() - self._last_retry_after_received
         remaining_wait = max(0, self._wait_time - time_elapsed)
         log.debug(
