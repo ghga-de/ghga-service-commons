@@ -28,7 +28,7 @@ from ghga_service_commons.transports.config import RatelimitingTransportConfig
 log = getLogger(__name__)
 
 
-class AsyncRatelimitingTransport(httpx.AsyncBaseTransport):
+class AsyncRateLimitingTransport(httpx.AsyncBaseTransport):
     """Custom async Transport adding rate limiting handling on top of AsyncHTTPTransport.
 
     If no retry-after header is found in the 429 response, this hands control back to the
