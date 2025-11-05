@@ -55,7 +55,7 @@ class RetryTransportConfig(BaseSettings):
     exponential_backoff_max: NonNegativeInt = Field(
         default=60,
         description="Maximum number of seconds to wait between retries when using"
-        + "exponential backoff retry strategies. The client timeout might need to be adjusted accoringly.",
+        + " exponential backoff retry strategies. The client timeout might need to be adjusted accordingly.",
     )
     max_retries: NonNegativeInt = Field(
         default=3, description="Number of times to retry failed API calls."
