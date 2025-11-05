@@ -35,7 +35,7 @@ class CacheTransportConfig(BaseSettings):
     )
 
 
-class RatelimitingTransportConfig(BaseSettings):
+class RateLimitingTransportConfig(BaseSettings):
     """Configuration options for a rate limiting HTTPTransport."""
 
     jitter: NonNegativeFloat = Field(
