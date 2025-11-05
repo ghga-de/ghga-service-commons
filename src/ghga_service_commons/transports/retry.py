@@ -140,7 +140,7 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
             )
         except tenacity.RetryError as exc:
             # last_attempt is potentially an unawaited future, need to explicitly reraise
-            # to get the correct innter instance displayed
+            # to get the correct inner instance displayed
             exc.reraise()
         return response
 
