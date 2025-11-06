@@ -25,11 +25,11 @@ class CacheTransportConfig(BaseSettings):
     Currently only in memory storage is available.
     """
 
-    cache_ttl: NonNegativeInt = Field(
+    client_cache_ttl: NonNegativeInt = Field(
         default=60,
         description="Number of seconds after which a stored response is considered stale.",
     )
-    cache_capacity: PositiveInt = Field(
+    client_cache_capacity: PositiveInt = Field(
         default=128,
         description="Maximum number of entries to store in the cache. Older entries are evicted once this limit is reached.",
     )
@@ -38,11 +38,11 @@ class CacheTransportConfig(BaseSettings):
 class RateLimitingTransportConfig(BaseSettings):
     """Configuration options for a rate limiting HTTPTransport."""
 
-    jitter: NonNegativeFloat = Field(
+    per_request_jitter: NonNegativeFloat = Field(
         default=0.0,
         description="Max amount of jitter (in seconds) to add to each request.",
     )
-    reset_after: PositiveInt = Field(
+    carry_over_retry_after_for: PositiveInt = Field(
         default=1,
         description="Amount of requests after which the stored delay from a 429 response is ignored again. "
         + "Can be useful to adjust if concurrent requests are fired in quick succession.",
@@ -52,15 +52,15 @@ class RateLimitingTransportConfig(BaseSettings):
 class RetryTransportConfig(BaseSettings):
     """Configuration options for an HTTPTransport providing retry logic."""
 
-    exponential_backoff_max: NonNegativeInt = Field(
+    client_exponential_backoff_max: NonNegativeInt = Field(
         default=60,
         description="Maximum number of seconds to wait between retries when using"
         + " exponential backoff retry strategies. The client timeout might need to be adjusted accordingly.",
     )
-    max_retries: NonNegativeInt = Field(
+    client_num_retries: NonNegativeInt = Field(
         default=3, description="Number of times to retry failed API calls."
     )
-    retry_status_codes: list[NonNegativeInt] = Field(
+    client_retry_status_codes: list[NonNegativeInt] = Field(
         default=[408, 429, 500, 502, 503, 504],
         description="List of status codes that should trigger retrying a request.",
     )

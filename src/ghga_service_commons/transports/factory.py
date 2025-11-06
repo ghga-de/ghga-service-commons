@@ -54,6 +54,6 @@ class CompositeTransportFactory:
         cls, config: CompositeCacheConfig, limits: Limits | None = None
     ) -> AsyncCacheTransport:
         """Creates a retry transport, wrapping a rate limiting transport, wrapping a cache transport, wrapping an AsyncHTTPTransport."""
-        storage = AsyncInMemoryStorage(ttl=config.cache_ttl)
+        storage = AsyncInMemoryStorage(ttl=config.client_cache_ttl)
         retry_transport = cls._create_common_transport_layers(config, limits=limits)
         return AsyncCacheTransport(transport=retry_transport, storage=storage)

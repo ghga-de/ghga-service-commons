@@ -39,12 +39,12 @@ log = getLogger(__name__)
 
 def _default_wait_strategy(config: RetryTransportConfig):
     """Wait strategy using exponential backoff, not waiting for 429 responses."""
-    return wait_exponential_ignore_429(max=config.exponential_backoff_max)
+    return wait_exponential_ignore_429(max=config.client_exponential_backoff_max)
 
 
 def _default_stop_strategy(config: RetryTransportConfig):
     """Basic stop strategy aborting retrying after a configured number of attempts."""
-    return stop_after_attempt(config.max_retries)
+    return stop_after_attempt(config.client_num_retries)
 
 
 def _log_retry_stats(retry_state: RetryCallState):
@@ -177,7 +177,8 @@ def _configure_retry_handler(
                 )
             )
             | retry_if_result(
-                lambda response: response.status_code in config.retry_status_codes
+                lambda response: response.status_code
+                in config.client_retry_status_codes
             )
         ),
         stop=stop_strategy(config),
