@@ -15,7 +15,7 @@
 
 """Provides factories for different flavors of httpx.AsyncHTTPTransport."""
 
-from hishel import AsyncCacheTransport, AsyncInMemoryStorage
+from hishel import AsyncCacheTransport, AsyncInMemoryStorage, Controller
 from httpx import AsyncHTTPTransport, Limits
 
 from .config import CompositeCacheConfig, CompositeConfig
@@ -54,6 +54,14 @@ class CompositeTransportFactory:
         cls, config: CompositeCacheConfig, limits: Limits | None = None
     ) -> AsyncCacheTransport:
         """Creates a retry transport, wrapping a rate limiting transport, wrapping a cache transport, wrapping an AsyncHTTPTransport."""
-        storage = AsyncInMemoryStorage(ttl=config.client_cache_ttl)
         retry_transport = cls._create_common_transport_layers(config, limits=limits)
-        return AsyncCacheTransport(transport=retry_transport, storage=storage)
+        controller = Controller(
+            cacheable_methods=config.client_cacheable_methods,
+            cacheable_status_codes=config.client_cacheable_status_codes,
+        )
+        storage = AsyncInMemoryStorage(
+            ttl=config.client_cache_ttl, capacity=config.client_cache_capacity
+        )
+        return AsyncCacheTransport(
+            controller=controller, transport=retry_transport, storage=storage
+        )

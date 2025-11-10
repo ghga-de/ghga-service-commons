@@ -25,13 +25,21 @@ class CacheTransportConfig(BaseSettings):
     Currently only in memory storage is available.
     """
 
+    client_cache_capacity: PositiveInt = Field(
+        default=128,
+        description="Maximum number of entries to store in the cache. Older entries are evicted once this limit is reached.",
+    )
     client_cache_ttl: NonNegativeInt = Field(
         default=60,
         description="Number of seconds after which a stored response is considered stale.",
     )
-    client_cache_capacity: PositiveInt = Field(
-        default=128,
-        description="Maximum number of entries to store in the cache. Older entries are evicted once this limit is reached.",
+    client_cacheable_methods: list[str] = Field(
+        default=["POST", "GET"],
+        description="HTTP methods for which responses are allowed to be cached.",
+    )
+    client_cacheable_status_codes: list[int] = Field(
+        default=[200, 201],
+        description="HTTP response status code for which responses are allowed to be cached.",
     )
 
 
@@ -42,7 +50,7 @@ class RateLimitingTransportConfig(BaseSettings):
         default=0.0,
         description="Max amount of jitter (in seconds) to add to each request.",
     )
-    carry_over_retry_after_for: PositiveInt = Field(
+    retry_after_applicable_for_num_requests: PositiveInt = Field(
         default=1,
         description="Amount of requests after which the stored delay from a 429 response is ignored again. "
         + "Can be useful to adjust if concurrent requests are fired in quick succession.",

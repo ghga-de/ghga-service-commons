@@ -47,7 +47,7 @@ class AsyncRateLimitingTransport(httpx.AsyncBaseTransport):
         self._jitter = config.per_request_jitter
         self._transport = transport
         self._num_requests = 0
-        self._reset_after: int = config.carry_over_retry_after_for
+        self._reset_after: int = config.retry_after_applicable_for_num_requests
         self._last_retry_after_received: float = 0
         self._wait_time: float = 0
 
