@@ -72,6 +72,11 @@ class RetryTransportConfig(BaseSettings):
         default=[408, 429, 500, 502, 503, 504],
         description="List of status codes that should trigger retrying a request.",
     )
+    client_reraise_from_retry_error: bool = Field(
+        default=True,
+        description="Specifies if the exception wrapped in the final RetryError is reraised "
+        "or the RetryError is returned as is.",
+    )
 
 
 class CompositeConfig(RateLimitingTransportConfig, RetryTransportConfig):
