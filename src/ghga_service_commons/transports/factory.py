@@ -18,7 +18,7 @@
 from logging import getLogger
 
 from hishel import AsyncCacheTransport, AsyncInMemoryStorage, Controller
-from httpx import AsyncHTTPTransport, Limits
+from httpx import AsyncBaseTransport, AsyncHTTPTransport, Limits
 
 from .config import CompositeCacheConfig, CompositeConfig
 from .ratelimiting import AsyncRateLimitingTransport
@@ -34,7 +34,7 @@ class CompositeTransportFactory:
     def _create_common_transport_layers(
         cls,
         config: CompositeConfig,
-        base_transport: AsyncHTTPTransport | None = None,
+        base_transport: AsyncBaseTransport | None = None,
         limits: Limits | None = None,
     ):
         """Creates wrapped transports reused between different factory methods.
@@ -59,7 +59,7 @@ class CompositeTransportFactory:
     def create_ratelimiting_retry_transport(
         cls,
         config: CompositeConfig,
-        base_transport: AsyncHTTPTransport | None = None,
+        base_transport: AsyncBaseTransport | None = None,
         limits: Limits | None = None,
     ) -> AsyncRetryTransport:
         """Creates a retry transport, wrapping a rate limiting transport, wrapping an AsyncHTTPTransport."""
@@ -71,7 +71,7 @@ class CompositeTransportFactory:
     def create_cached_ratelimiting_retry_transport(
         cls,
         config: CompositeCacheConfig,
-        base_transport: AsyncHTTPTransport | None = None,
+        base_transport: AsyncBaseTransport | None = None,
         limits: Limits | None = None,
     ) -> AsyncCacheTransport:
         """Creates a retry transport, wrapping a rate limiting transport, wrapping a cache transport, wrapping an AsyncHTTPTransport."""
