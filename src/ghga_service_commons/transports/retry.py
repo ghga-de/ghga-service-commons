@@ -171,7 +171,7 @@ def _configure_retry_handler(
 ):
     """Configure the AsyncRetrying instance that is used for handling retryable responses/exceptions."""
     return AsyncRetrying(
-        # reraise=True,
+        reraise=True,
         retry=(
             retry_if_exception_type(
                 (
