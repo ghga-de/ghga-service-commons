@@ -17,6 +17,7 @@
 
 import time
 from collections.abc import Callable
+from contextlib import suppress
 from logging import getLogger
 from types import TracebackType
 from typing import Any, Self
@@ -64,14 +65,16 @@ def _log_retry_stats(retry_state: RetryCallState):
     stats["idle_for"] = round(stats["idle_for"], 3)
 
     # Enrich with details from current attempt for debugging
-    # if outcome := retry_state.outcome:
-    #    result = outcome.result()
-    #    if isinstance(result, httpx.Response):
-    #        stats["response_status_code"] = result.status_code
-    #        stats["response_headers"] = result.headers
-    #    elif isinstance(result, Exception):
-    #        stats["exception_type"] = type(result)
-    #        stats["exception_message"] = str(result)
+    if outcome := retry_state.outcome:
+        try:
+            result = outcome.result()
+        except Exception as exc:
+            stats["exception_type"] = type(exc)
+            stats["exception_message"] = str(exc)
+        else:
+            if isinstance(result, httpx.Response):
+                stats["response_status_code"] = result.status_code
+                stats["response_headers"] = result.headers
 
     log.info(
         "Retry attempt number %i for function %s.",
@@ -90,14 +93,15 @@ class wait_exponential_ignore_429(wait_exponential):  # noqa: N801
 
     def __call__(self, retry_state: RetryCallState) -> float:
         """Copied from base class and adjusted."""
-        if (
-            retry_state.outcome
-            and (result := retry_state.outcome.result())
-            and isinstance(result, httpx.Response)
-            and result.status_code == 429
-            and not result.headers.get("Should-Wait")
-        ):
-            return 0
+        if retry_state.outcome:
+            with suppress(Exception):
+                result = retry_state.outcome.result()
+                if (
+                    isinstance(result, httpx.Response)
+                    and result.status_code == 429
+                    and not result.headers.get("Should-Wait")
+                ):
+                    return 0
         try:
             exp = self.exp_base ** (retry_state.attempt_number - 1)
             result = self.multiplier * exp
