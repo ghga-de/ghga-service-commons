@@ -23,7 +23,6 @@ from types import TracebackType
 from typing import Any, Self
 
 import httpx
-import tenacity
 from tenacity import (
     AsyncRetrying,
     RetryCallState,
@@ -137,16 +136,9 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Handles HTTP requests and adds retry logic around calls."""
-        response = None
-        try:
-            response = await self._retry_handler(
-                fn=self._transport.handle_async_request, request=request
-            )
-        except tenacity.RetryError as exc:
-            # last_attempt is potentially an unawaited future, need to explicitly reraise
-            # to get the correct inner instance displayed
-            exc.reraise()
-        return response
+        return await self._retry_handler(
+            fn=self._transport.handle_async_request, request=request
+        )
 
     async def aclose(self) -> None:  # noqa: D102
         await self._transport.aclose()
