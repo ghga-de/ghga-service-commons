@@ -15,6 +15,8 @@
 
 """Provides factories for different flavors of httpx.AsyncHTTPTransport."""
 
+from logging import getLogger
+
 from hishel import AsyncCacheTransport, AsyncInMemoryStorage, Controller
 from httpx import AsyncHTTPTransport, Limits
 
@@ -22,17 +24,28 @@ from .config import CompositeCacheConfig, CompositeConfig
 from .ratelimiting import AsyncRateLimitingTransport
 from .retry import AsyncRetryTransport
 
+log = getLogger(__name__)
+
 
 class CompositeTransportFactory:
     """Produces different flavors of httpx.AsyncHTTPTransports and takes care of wrapping them in the correct order."""
 
     @classmethod
     def _create_common_transport_layers(
-        cls, config: CompositeConfig, limits: Limits | None = None
+        cls,
+        config: CompositeConfig,
+        base_transport: AsyncHTTPTransport | None = None,
+        limits: Limits | None = None,
     ):
-        """Creates wrapped transports reused between different factory methods."""
+        """Creates wrapped transports reused between different factory methods.
+
+        If provided, a custom base_transport class is used and any limits are ignored.
+        Those have to be provided directly to the custom base_transport passed into this method.
+        """
         base_transport = (
-            AsyncHTTPTransport(limits=limits) if limits else AsyncHTTPTransport()
+            base_transport or AsyncHTTPTransport(limits=limits)
+            if limits
+            else AsyncHTTPTransport()
         )
         ratelimiting_transport = AsyncRateLimitingTransport(
             config=config, transport=base_transport
@@ -44,17 +57,27 @@ class CompositeTransportFactory:
 
     @classmethod
     def create_ratelimiting_retry_transport(
-        cls, config: CompositeConfig, limits: Limits | None = None
+        cls,
+        config: CompositeConfig,
+        base_transport: AsyncHTTPTransport | None = None,
+        limits: Limits | None = None,
     ) -> AsyncRetryTransport:
         """Creates a retry transport, wrapping a rate limiting transport, wrapping an AsyncHTTPTransport."""
-        return cls._create_common_transport_layers(config, limits=limits)
+        return cls._create_common_transport_layers(
+            config, base_transport=base_transport, limits=limits
+        )
 
     @classmethod
     def create_cached_ratelimiting_retry_transport(
-        cls, config: CompositeCacheConfig, limits: Limits | None = None
+        cls,
+        config: CompositeCacheConfig,
+        base_transport: AsyncHTTPTransport | None = None,
+        limits: Limits | None = None,
     ) -> AsyncCacheTransport:
         """Creates a retry transport, wrapping a rate limiting transport, wrapping a cache transport, wrapping an AsyncHTTPTransport."""
-        retry_transport = cls._create_common_transport_layers(config, limits=limits)
+        retry_transport = cls._create_common_transport_layers(
+            config, base_transport=base_transport, limits=limits
+        )
         controller = Controller(
             cacheable_methods=config.client_cacheable_methods,
             cacheable_status_codes=config.client_cacheable_status_codes,
