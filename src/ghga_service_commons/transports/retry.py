@@ -64,14 +64,14 @@ def _log_retry_stats(retry_state: RetryCallState):
     stats["idle_for"] = round(stats["idle_for"], 3)
 
     # Enrich with details from current attempt for debugging
-    if outcome := retry_state.outcome:
-        result = outcome.result()
-        if isinstance(result, httpx.Response):
-            stats["response_status_code"] = result.status_code
-            stats["response_headers"] = result.headers
-        elif isinstance(result, Exception):
-            stats["exception_type"] = type(result)
-            stats["exception_message"] = str(result)
+    # if outcome := retry_state.outcome:
+    #    result = outcome.result()
+    #    if isinstance(result, httpx.Response):
+    #        stats["response_status_code"] = result.status_code
+    #        stats["response_headers"] = result.headers
+    #    elif isinstance(result, Exception):
+    #        stats["exception_type"] = type(result)
+    #        stats["exception_message"] = str(result)
 
     log.info(
         "Retry attempt number %i for function %s.",
