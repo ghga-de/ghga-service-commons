@@ -15,16 +15,12 @@
 
 """Provides factories for different flavors of httpx.AsyncHTTPTransport."""
 
-from logging import getLogger
-
 from hishel import AsyncCacheTransport, AsyncInMemoryStorage, Controller
 from httpx import AsyncBaseTransport, AsyncHTTPTransport, Limits
 
 from .config import CompositeCacheConfig, CompositeConfig
 from .ratelimiting import AsyncRateLimitingTransport
 from .retry import AsyncRetryTransport
-
-log = getLogger(__name__)
 
 
 class CompositeTransportFactory:
