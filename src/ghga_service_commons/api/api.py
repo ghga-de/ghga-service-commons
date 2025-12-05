@@ -190,7 +190,18 @@ def get_validated_correlation_id(
         valid_correlation_id = new_correlation_id()
         log.debug("Generated new correlation id: %s", correlation_id)
     else:
-        valid_correlation_id = correlation_id_from_str(correlation_id)
+        try:
+            valid_correlation_id = correlation_id_from_str(correlation_id)
+        except InvalidCorrelationIdError:
+            if generate_correlation_id:
+                valid_correlation_id = new_correlation_id()
+                log.debug(
+                    "Replacing invalid correlation id %s with %s",
+                    correlation_id,
+                    valid_correlation_id,
+                )
+            else:
+                raise
     return valid_correlation_id
 
 
