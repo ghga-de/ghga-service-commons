@@ -239,13 +239,15 @@ async def test_async_client(generate_correlation_id: bool):
 
 
 @pytest.mark.parametrize("generate_correlation_id", [True, False])
-async def test_correlation_id_middleware_non_v4_uuid(generate_correlation_id: bool):
+async def test_correlation_id_middleware_non_v4_uuid(
+    generate_correlation_id: bool, caplog, monkeypatch
+):
     """Test that the server middleware correctly replaces an inbound request's
     correlation ID if it isn't a valid UUID4.
     """
     app = FastAPI()
 
-    config = ApiConfigBase()
+    config = ApiConfigBase(generate_correlation_id=generate_correlation_id)
     configure_app(app, config)
 
     @app.get("/")
@@ -257,13 +259,33 @@ async def test_correlation_id_middleware_non_v4_uuid(generate_correlation_id: bo
     client = AsyncTestClient(app=app)
     non_v4_uuid = "a362ef97-f600-9b51-a5e6-163874e8778a"
     headers = {CORRELATION_ID_HEADER_NAME: non_v4_uuid}
+
+    # Patch new_correlation_id() to produce a known value so that we can inspect the log
+    caplog.clear()
+    monkeypatch.setattr(
+        "ghga_service_commons.api.api.new_correlation_id",
+        lambda: UUID(VALID_CORRELATION_ID),
+    )
+
+    # Make a call to the endpoint defined above
     response = await client.get("/", headers=headers)
+
+    # Test for the log generation
+    if not generate_correlation_id:
+        assert not caplog.records
+    else:
+        assert caplog.records
+        assert caplog.records[0].getMessage() == (
+            f"Detected a non-uuid4 value for correlation ID ({non_v4_uuid})."
+            + f" Replacing with newly-generated value: {VALID_CORRELATION_ID}"
+        )
 
     # The goal is for the middleware to catch the header and update it if
     #  generate_correlation_id is True, and otherwise return a 400 BAD REQUEST
     assert response.status_code == 200 if generate_correlation_id else 400
     if generate_correlation_id:
         raw_response = response.json()
+        assert response.headers[CORRELATION_ID_HEADER_NAME] == raw_response
         assert raw_response != non_v4_uuid, "CID header was not updated by middleware"
         end_cid = UUID(raw_response)
         assert end_cid.version == 4, "CID header was updated but...somehow is not v4?"
