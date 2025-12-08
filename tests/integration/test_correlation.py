@@ -241,7 +241,7 @@ async def test_async_client(generate_correlation_id: bool):
 @pytest.mark.parametrize("generate_correlation_id", [True, False])
 async def test_correlation_id_middleware_non_v4_uuid(generate_correlation_id: bool):
     """Test that the server middleware correctly replaces an inbound request's
-    correlation ID if it isn't a valid UUID.
+    correlation ID if it isn't a valid UUID4.
     """
     app = FastAPI()
 
