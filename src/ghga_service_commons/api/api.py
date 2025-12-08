@@ -188,9 +188,7 @@ def get_validated_correlation_id(
     """
     if not correlation_id and generate_correlation_id:
         valid_correlation_id = new_correlation_id()
-        log.debug(
-            "No correlation ID found. Generated new one: %s", correlation_id
-        )
+        log.info("No correlation ID found. Generated new one: %s", correlation_id)
     else:
         try:
             valid_correlation_id = correlation_id_from_str(correlation_id)
