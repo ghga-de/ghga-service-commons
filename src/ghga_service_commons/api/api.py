@@ -189,7 +189,7 @@ def get_validated_correlation_id(
     if not correlation_id and generate_correlation_id:
         valid_correlation_id = new_correlation_id()
         log.debug(
-            "No correlation ID found. Generated new correlation id: %s", correlation_id
+            "No correlation ID found. Generated new one: %s", correlation_id
         )
     else:
         try:
