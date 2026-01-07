@@ -22,6 +22,10 @@ from .factory import (
     AsyncRetryTransport,
     CompositeTransportFactory,
 )
+from .proxy_handling import (
+    cached_ratelimiting_retry_proxies,
+    ratelimiting_retry_proxies,
+)
 
 __all__ = [
     "AsyncCacheTransport",
@@ -30,4 +34,6 @@ __all__ = [
     "CompositeCacheConfig",
     "CompositeConfig",
     "CompositeTransportFactory",
+    "cached_ratelimiting_retry_proxies",
+    "ratelimiting_retry_proxies",
 ]
