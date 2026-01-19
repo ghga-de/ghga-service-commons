@@ -50,10 +50,6 @@ class RateLimitingTransportConfig(BaseSettings):
         default=0.0,
         description="Max amount of jitter (in seconds) to add to each request.",
     )
-    delay: NonNegativeFloat = Field(
-        default=0.0,
-        description="Amount of time to wait (in seconds) before the next request is fired.",
-    )
     retry_after_applicable_for_num_requests: PositiveInt = Field(
         default=1,
         description="Amount of requests after which the stored delay from a 429 response is ignored again. "

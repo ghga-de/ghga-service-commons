@@ -43,7 +43,6 @@ class AsyncRateLimitingTransport(httpx.AsyncBaseTransport):
     def __init__(
         self, config: RateLimitingTransportConfig, transport: httpx.AsyncBaseTransport
     ) -> None:
-        self._delay = config.delay
         self._jitter = config.per_request_jitter
         self._transport = transport
         self._num_requests = 0
@@ -64,14 +63,11 @@ class AsyncRateLimitingTransport(httpx.AsyncBaseTransport):
 
         # Add jitter to both cases and sleep
         if remaining_wait < self._jitter:
-            sleep_for = random.uniform(remaining_wait, self._jitter) + self._delay  # noqa: S311
+            sleep_for = random.uniform(remaining_wait, self._jitter)  # noqa: S311
             log.debug("Sleeping for %.3f s.", sleep_for)
             await asyncio.sleep(sleep_for)
         else:
-            sleep_for = (
-                random.uniform(remaining_wait, remaining_wait + self._jitter)  # noqa: S311
-                + self._delay
-            )
+            sleep_for = random.uniform(remaining_wait, remaining_wait + self._jitter)  # noqa: S311
             log.debug("Sleeping for %.3f s.", sleep_for)
             await asyncio.sleep(sleep_for)
 
