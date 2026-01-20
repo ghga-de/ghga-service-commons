@@ -17,11 +17,11 @@
 """Tests for proxy handling functions."""
 
 import os
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
+import httpx
 import pytest
 from hishel import AsyncCacheTransport
-from httpx import Limits
 
 from ghga_service_commons.transports.config import CompositeCacheConfig, CompositeConfig
 from ghga_service_commons.transports.proxy_handling import (
@@ -105,20 +105,6 @@ class TestRateLimitingRetryProxies:
             mounts = ratelimiting_retry_proxies(config)
 
             assert mounts == {}
-
-    def test_with_limits(self):
-        """Test that limits are passed to the transport factory."""
-        config = CompositeConfig()
-        limits = Limits(max_connections=10, max_keepalive_connections=5)
-
-        with patch(
-            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
-            return_value={"http://": "http://proxy.example.com:8080"},
-        ):
-            mounts = ratelimiting_retry_proxies(config, limits=limits)
-
-            assert "http://" in mounts
-            assert isinstance(mounts["http://"], AsyncRetryTransport)
 
     def test_filters_none_proxy_values(self):
         """Test that None proxy values are filtered out."""
@@ -215,20 +201,6 @@ class TestCachedRateLimitingRetryProxies:
 
             assert mounts == {}
 
-    def test_with_limits(self):
-        """Test that limits are passed to the transport factory."""
-        config = CompositeCacheConfig()
-        limits = Limits(max_connections=20, max_keepalive_connections=10)
-
-        with patch(
-            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
-            return_value={"https://": "https://secure-proxy.example.com:8443"},
-        ):
-            mounts = cached_ratelimiting_retry_proxies(config, limits=limits)
-
-            assert "https://" in mounts
-            assert isinstance(mounts["https://"], AsyncCacheTransport)
-
     def test_filters_none_proxy_values(self):
         """Test that None proxy values are filtered out."""
         config = CompositeCacheConfig()
@@ -250,30 +222,339 @@ class TestCachedRateLimitingRetryProxies:
             assert "https://" not in mounts
 
 
-class TestProxyProtocolSupport:
-    """Tests to verify all supported proxy protocols are handled correctly."""
+class TestRateLimitingRetryProxiesIntegration:
+    """Integration tests using mounts with httpx.AsyncClient."""
 
-    @pytest.mark.parametrize(
-        "protocol_key",
-        [
-            "http://",
-            "https://",
-            "all://",
-        ],
-    )
-    def test_ratelimiting_retry_all_protocols(self, protocol_key):
-        """Test that ratelimiting_retry_proxies supports all protocol keys."""
+    @pytest.mark.asyncio
+    async def test_ratelimiting_retry_with_http_proxy_mount(self):
+        """Test that ratelimiting_retry_proxies mounts work with AsyncClient for HTTP."""
         config = CompositeConfig()
-        proxy_url = "http://proxy.example.com:8080"
 
         with patch(
             "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
-            return_value={protocol_key: proxy_url},
+            return_value={"http://": "http://proxy.example.com:8080"},
         ):
             mounts = ratelimiting_retry_proxies(config)
 
-            assert protocol_key in mounts
-            assert isinstance(mounts[protocol_key], AsyncRetryTransport)
+            # Create a mock response
+            mock_response = httpx.Response(
+                status_code=200,
+                headers={"content-type": "application/json"},
+                content=b'{"result": "success"}',
+            )
+
+            # Patch the transport's handle_async_request to verify it's called
+            with patch.object(
+                mounts["http://"],
+                "handle_async_request",
+                new_callable=AsyncMock,
+                return_value=mock_response,
+            ):
+                async with httpx.AsyncClient(mounts=mounts) as client:
+                    response = await client.get("http://example.com/test")
+
+                    assert response.status_code == 200
+                    assert response.json() == {"result": "success"}
+                    # Verify the transport was used
+                    mounts["http://"].handle_async_request.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_ratelimiting_retry_with_https_proxy_mount(self):
+        """Test that ratelimiting_retry_proxies mounts work with AsyncClient for HTTPS."""
+        config = CompositeConfig()
+
+        with patch(
+            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
+            return_value={"https://": "https://secure-proxy.example.com:8443"},
+        ):
+            mounts = ratelimiting_retry_proxies(config)
+
+            mock_response = httpx.Response(
+                status_code=200,
+                headers={"content-type": "application/json"},
+                content=b'{"secure": true}',
+            )
+
+            with patch.object(
+                mounts["https://"],
+                "handle_async_request",
+                new_callable=AsyncMock,
+                return_value=mock_response,
+            ):
+                async with httpx.AsyncClient(mounts=mounts) as client:
+                    response = await client.get("https://secure.example.com/api")
+
+                    assert response.status_code == 200
+                    assert response.json() == {"secure": True}
+                    mounts["https://"].handle_async_request.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_ratelimiting_retry_with_all_proxy_mount(self):
+        """Test that ratelimiting_retry_proxies mounts work with AsyncClient for all protocol."""
+        config = CompositeConfig()
+
+        with patch(
+            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
+            return_value={"all://": "http://fallback-proxy.example.com:8080"},
+        ):
+            mounts = ratelimiting_retry_proxies(config)
+
+            mock_response = httpx.Response(
+                status_code=204,
+                headers={"x-fallback": "true"},
+            )
+
+            with patch.object(
+                mounts["all://"],
+                "handle_async_request",
+                new_callable=AsyncMock,
+                return_value=mock_response,
+            ):
+                async with httpx.AsyncClient(mounts=mounts) as client:
+                    response = await client.get("ftp://files.example.com/data")
+
+                    assert response.status_code == 204
+                    assert response.headers["x-fallback"] == "true"
+                    mounts["all://"].handle_async_request.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_ratelimiting_retry_with_multiple_proxies_mount(self):
+        """Test that multiple proxy mounts work correctly with AsyncClient."""
+        config = CompositeConfig()
+
+        with patch(
+            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
+            return_value={
+                "http://": "http://proxy.example.com:8080",
+                "https://": "https://secure-proxy.example.com:8443",
+                "all://": "http://fallback-proxy.example.com:8080",
+            },
+        ):
+            mounts = ratelimiting_retry_proxies(config)
+
+            http_response = httpx.Response(
+                status_code=200,
+                content=b'{"protocol": "http"}',
+            )
+            https_response = httpx.Response(
+                status_code=200,
+                content=b'{"protocol": "https"}',
+            )
+
+            # Mock transports for different protocols
+            with (
+                patch.object(
+                    mounts["http://"],
+                    "handle_async_request",
+                    new_callable=AsyncMock,
+                    return_value=http_response,
+                ),
+                patch.object(
+                    mounts["https://"],
+                    "handle_async_request",
+                    new_callable=AsyncMock,
+                    return_value=https_response,
+                ),
+            ):
+                async with httpx.AsyncClient(mounts=mounts) as client:
+                    http_resp = await client.get("http://example.com")
+                    https_resp = await client.get("https://example.com")
+
+                    assert http_resp.status_code == 200
+                    assert http_resp.json() == {"protocol": "http"}
+                    assert https_resp.status_code == 200
+                    assert https_resp.json() == {"protocol": "https"}
+
+
+class TestCachedRateLimitingRetryProxiesIntegration:
+    """Integration tests using cached mounts with httpx.AsyncClient."""
+
+    @pytest.mark.asyncio
+    async def test_cached_ratelimiting_retry_with_http_proxy_mount(self):
+        """Test that cached_ratelimiting_retry_proxies mounts work with AsyncClient for HTTP."""
+        config = CompositeCacheConfig()
+
+        with patch(
+            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
+            return_value={"http://": "http://proxy.example.com:8080"},
+        ):
+            mounts = cached_ratelimiting_retry_proxies(config)
+
+            mock_response = httpx.Response(
+                status_code=200,
+                headers={"content-type": "application/json"},
+                content=b'{"cached": false}',
+            )
+
+            with patch.object(
+                mounts["http://"],
+                "handle_async_request",
+                new_callable=AsyncMock,
+                return_value=mock_response,
+            ):
+                async with httpx.AsyncClient(mounts=mounts) as client:
+                    response = await client.get("http://example.com/data")
+
+                    assert response.status_code == 200
+                    assert response.json() == {"cached": False}
+                    mounts["http://"].handle_async_request.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_cached_ratelimiting_retry_with_https_proxy_mount(self):
+        """Test that cached_ratelimiting_retry_proxies mounts work with AsyncClient for HTTPS."""
+        config = CompositeCacheConfig()
+
+        with patch(
+            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
+            return_value={"https://": "https://secure-proxy.example.com:8443"},
+        ):
+            mounts = cached_ratelimiting_retry_proxies(config)
+
+            mock_response = httpx.Response(
+                status_code=200,
+                headers={"cache-control": "max-age=3600"},
+                content=b'{"cached": true}',
+            )
+
+            with patch.object(
+                mounts["https://"],
+                "handle_async_request",
+                new_callable=AsyncMock,
+                return_value=mock_response,
+            ):
+                async with httpx.AsyncClient(mounts=mounts) as client:
+                    response = await client.get("https://api.example.com/v1/data")
+
+                    assert response.status_code == 200
+                    assert response.json() == {"cached": True}
+                    mounts["https://"].handle_async_request.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_cached_ratelimiting_retry_with_all_proxy_mount(self):
+        """Test that cached_ratelimiting_retry_proxies mounts work with AsyncClient for all protocol."""
+        config = CompositeCacheConfig()
+
+        with patch(
+            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
+            return_value={"all://": "http://fallback-proxy.example.com:8080"},
+        ):
+            mounts = cached_ratelimiting_retry_proxies(config)
+
+            mock_response = httpx.Response(
+                status_code=201,
+                headers={"x-created": "true"},
+                content=b'{"id": 123}',
+            )
+
+            with patch.object(
+                mounts["all://"],
+                "handle_async_request",
+                new_callable=AsyncMock,
+                return_value=mock_response,
+            ):
+                async with httpx.AsyncClient(mounts=mounts) as client:
+                    response = await client.post("gopher://files.example.com/resource")
+
+                    assert response.status_code == 201
+                    assert response.json() == {"id": 123}
+                    mounts["all://"].handle_async_request.assert_called()
+
+    @pytest.mark.asyncio
+    async def test_cached_ratelimiting_retry_with_multiple_proxies_mount(self):
+        """Test that multiple cached proxy mounts work correctly with AsyncClient."""
+        config = CompositeCacheConfig()
+
+        with patch(
+            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
+            return_value={
+                "http://": "http://proxy.example.com:8080",
+                "https://": "https://secure-proxy.example.com:8443",
+                "all://": "http://fallback-proxy.example.com:8080",
+            },
+        ):
+            mounts = cached_ratelimiting_retry_proxies(config)
+
+            http_response = httpx.Response(
+                status_code=200,
+                content=b'{"protocol": "http", "cached": true}',
+            )
+            https_response = httpx.Response(
+                status_code=200,
+                content=b'{"protocol": "https", "cached": true}',
+            )
+            all_response = httpx.Response(
+                status_code=200,
+                content=b'{"protocol": "fallback", "cached": true}',
+            )
+
+            # Mock transports for different protocols
+            with (
+                patch.object(
+                    mounts["http://"],
+                    "handle_async_request",
+                    new_callable=AsyncMock,
+                    return_value=http_response,
+                ),
+                patch.object(
+                    mounts["https://"],
+                    "handle_async_request",
+                    new_callable=AsyncMock,
+                    return_value=https_response,
+                ),
+                patch.object(
+                    mounts["all://"],
+                    "handle_async_request",
+                    new_callable=AsyncMock,
+                    return_value=all_response,
+                ),
+            ):
+                async with httpx.AsyncClient(mounts=mounts) as client:
+                    http_resp = await client.get("http://example.com")
+                    https_resp = await client.get("https://example.com")
+                    all_resp = await client.get("custom://example.com")
+
+                    assert http_resp.status_code == 200
+                    assert http_resp.json()["protocol"] == "http"
+                    assert https_resp.status_code == 200
+                    assert https_resp.json()["protocol"] == "https"
+                    assert all_resp.status_code == 200
+                    assert all_resp.json()["protocol"] == "fallback"
+
+
+class TestTransportTypeVerification:
+    """Verify transport types are correctly used in the mounts."""
+
+    def test_ratelimiting_retry_transport_hierarchy_http(self):
+        """Verify AsyncRetryTransport hierarchy for HTTP proxy."""
+        config = CompositeConfig()
+
+        with patch(
+            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
+            return_value={"http://": "http://proxy.example.com:8080"},
+        ):
+            mounts = ratelimiting_retry_proxies(config)
+
+            transport = mounts["http://"]
+            assert isinstance(transport, AsyncRetryTransport)
+            # Verify it has the underlying transport layers
+            assert hasattr(transport, "_transport")
+            assert transport._transport is not None
+
+    def test_cached_ratelimiting_retry_transport_hierarchy_https(self):
+        """Verify AsyncCacheTransport hierarchy for HTTPS proxy."""
+        config = CompositeCacheConfig()
+
+        with patch(
+            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
+            return_value={"https://": "https://secure-proxy.example.com:8443"},
+        ):
+            mounts = cached_ratelimiting_retry_proxies(config)
+
+            transport = mounts["https://"]
+            assert isinstance(transport, AsyncCacheTransport)
+            # Verify it has underlying transport
+            assert hasattr(transport, "_transport")
+            assert transport._transport is not None
 
     @pytest.mark.parametrize(
         "protocol_key",
@@ -283,16 +564,38 @@ class TestProxyProtocolSupport:
             "all://",
         ],
     )
-    def test_cached_ratelimiting_retry_all_protocols(self, protocol_key):
-        """Test that cached_ratelimiting_retry_proxies supports all protocol keys."""
-        config = CompositeCacheConfig()
-        proxy_url = "http://proxy.example.com:8080"
+    def test_ratelimiting_retry_transport_types_for_all_protocols(self, protocol_key):
+        """Verify all protocols use AsyncRetryTransport in ratelimiting_retry_proxies."""
+        config = CompositeConfig()
 
         with patch(
             "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
-            return_value={protocol_key: proxy_url},
+            return_value={protocol_key: "http://proxy.example.com:8080"},
+        ):
+            mounts = ratelimiting_retry_proxies(config)
+
+            transport = mounts[protocol_key]
+            assert isinstance(transport, AsyncRetryTransport)
+
+    @pytest.mark.parametrize(
+        "protocol_key",
+        [
+            "http://",
+            "https://",
+            "all://",
+        ],
+    )
+    def test_cached_ratelimiting_retry_transport_types_for_all_protocols(
+        self, protocol_key
+    ):
+        """Verify all protocols use AsyncCacheTransport in cached_ratelimiting_retry_proxies."""
+        config = CompositeCacheConfig()
+
+        with patch(
+            "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
+            return_value={protocol_key: "http://proxy.example.com:8080"},
         ):
             mounts = cached_ratelimiting_retry_proxies(config)
 
-            assert protocol_key in mounts
-            assert isinstance(mounts[protocol_key], AsyncCacheTransport)
+            transport = mounts[protocol_key]
+            assert isinstance(transport, AsyncCacheTransport)
