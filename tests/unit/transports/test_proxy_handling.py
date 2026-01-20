@@ -250,3 +250,55 @@ async def test_with_proxy_mount(
                 transport.handle_async_request.assert_called()
                 # check the proxy base transports were wrapped
                 assert isinstance(transport, (AsyncRetryTransport, AsyncCacheTransport))
+
+
+@pytest.mark.parametrize(
+    "config_class,proxy_fn",
+    [
+        (CompositeConfig, ratelimiting_retry_proxies),
+        (CompositeCacheConfig, cached_ratelimiting_retry_proxies),
+    ],
+)
+@pytest.mark.parametrize(
+    "protocol_key,proxy_url,request_url,expected_response",
+    [
+        (
+            HTTPS_PROTOCOL,
+            HTTPS_PROXY_URL,
+            HTTP_REQUEST_URL,
+            HTTPS_PROTOCOL_RESPONSE,
+        )
+    ],
+)
+@pytest.mark.asyncio
+async def test_not_hitting_proxy_mount(
+    config_class: type[CompositeConfig | CompositeCacheConfig],
+    proxy_fn: Callable,
+    protocol_key: str,
+    proxy_url: str,
+    request_url: str,
+    expected_response: bytes,
+):
+    """Test that proxy mounts are not used in AsyncClient if the URL protocol doesn't match."""
+    config = config_class()
+
+    with patch(
+        "ghga_service_commons.transports.proxy_handling._utils.get_environment_proxies",
+        return_value={protocol_key: proxy_url},
+    ):
+        mounts = proxy_fn(config)
+
+        mock_response = httpx.Response(
+            status_code=200,
+            content=expected_response,
+        )
+
+        with patch.object(
+            mounts[protocol_key],
+            "handle_async_request",
+            new_callable=AsyncMock,
+            return_value=mock_response,
+        ):
+            async with httpx.AsyncClient(mounts=mounts) as client:
+                await client.get(request_url)
+                mounts[protocol_key].handle_async_request.assert_not_called()
