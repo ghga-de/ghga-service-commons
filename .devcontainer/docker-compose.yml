@@ -5,7 +5,10 @@ services:
       dockerfile: ./Dockerfile
 
     init: true
-    privileged: true
+
+    # Makes testcontainers work on linux based hosts
+    extra_hosts:
+      - host.docker.internal:host-gateway
 
     volumes:
       - ..:/workspace:cached
