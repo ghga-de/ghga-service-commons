@@ -18,7 +18,7 @@ http = ["httpx>=0.28, <0.29"]
 auth = ["jwcrypto>=1.5.6, <2", "pydantic[email]>=2, <3"]
 crypt = ["pynacl>=1.6.2, <2", "crypt4gh>=1.7, <2"]
 dev = ["requests>=2.32, <3"]
-objectstorage = ["hexkit>=7.3"]
+objectstorage = ["hexkit>=8"]
 transports = [
     "hishel>=1.1.8, <2",
     "tenacity >=9.1.2, <10",
