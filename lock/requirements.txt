@@ -15,9 +15,17 @@ anyio==4.12.1 \
     --hash=sha256:d405828884fc140aa80a3c667b8beed277f1dfedec42ba031bd6ac3db606ab6c
     # via
     #   -c lock/requirements-dev.txt
+    #   anysqlite
+    #   hishel
     #   httpx
     #   starlette
     #   watchfiles
+anysqlite==0.0.5 \
+    --hash=sha256:9dfcf87baf6b93426ad1d9118088c41dbf24ef01b445eea4a5d486bac2755cce \
+    --hash=sha256:cb345dc4f76f6b37f768d7a0b3e9cf5c700dfcb7a6356af8ab46a11f666edbe7
+    # via
+    #   -c lock/requirements-dev.txt
+    #   hishel
 bcrypt==5.0.0 \
     --hash=sha256:046ad6db88edb3c5ece4369af997938fb1c19d6a699b9c1b27b0db432faae4c4 \
     --hash=sha256:0c418ca99fd47e9c59a301744d63328f17798b5947b0f791e9af3c1c499c2d0a \
