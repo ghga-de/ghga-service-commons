@@ -18,6 +18,7 @@
 import time
 from collections.abc import Callable
 from contextlib import suppress
+from functools import partial
 from logging import getLogger
 from types import TracebackType
 from typing import Any
@@ -136,9 +137,10 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Handles HTTP requests and adds retry logic around calls."""
-        return await self._retry_handler(
-            fn=self._transport.handle_async_request, request=request
-        )
+        # Strictly pass request as non kwarg arg to work around Otel httpx instrumentation
+        # trying to extract from arg[0]
+        fn = partial(self._transport.handle_async_request, request)
+        return await self._retry_handler(fn=fn)
 
     async def aclose(self) -> None:  # noqa: D102
         await self._transport.aclose()
@@ -173,8 +175,9 @@ def _configure_retry_handler(
                 )
             )
             | retry_if_result(
-                lambda response: response.status_code
-                in config.client_retry_status_codes
+                lambda response: (
+                    response.status_code in config.client_retry_status_codes
+                )
             )
         ),
         stop=stop_strategy(config),
