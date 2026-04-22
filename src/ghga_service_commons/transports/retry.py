@@ -18,7 +18,7 @@
 import time
 from collections.abc import Callable
 from contextlib import suppress
-from functools import partial
+from functools import partial, update_wrapper
 from logging import getLogger
 from types import TracebackType
 from typing import Any
@@ -140,6 +140,7 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
         # Strictly pass request as non kwarg arg to work around Otel httpx instrumentation
         # trying to extract from arg[0]
         fn = partial(self._transport.handle_async_request, request)
+        fn = update_wrapper(fn, self._transport.handle_async_request)  # type: ignore
         return await self._retry_handler(fn=fn)
 
     async def aclose(self) -> None:  # noqa: D102
