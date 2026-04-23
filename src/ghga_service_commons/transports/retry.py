@@ -140,6 +140,7 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
         # Strictly pass request as non kwarg arg to work around Otel httpx instrumentation
         # trying to extract from arg[0]
         fn = partial(self._transport.handle_async_request, request)
+        # Make it look like the original function so __qualname__ is available
         fn = update_wrapper(fn, self._transport.handle_async_request)  # type: ignore
         return await self._retry_handler(fn=fn)
 
