@@ -22,7 +22,7 @@ from pathlib import Path
 import certifi
 import pytest
 
-from ghga_service_commons.transports.factory import _get_ssl_verify
+from ghga_service_commons.transports.factory import get_ssl_verify
 
 
 @pytest.fixture
@@ -40,7 +40,7 @@ def test_get_ssl_verify_requests_ca_bundle(
     monkeypatch.delenv("SSL_CERT_FILE", raising=False)
     monkeypatch.setenv("REQUESTS_CA_BUNDLE", str(ca_bundle))
 
-    verify = _get_ssl_verify()
+    verify = get_ssl_verify()
 
     assert isinstance(verify, ssl.SSLContext)
 
@@ -50,7 +50,7 @@ def test_get_ssl_verify_ssl_cert_file(monkeypatch: pytest.MonkeyPatch, ca_bundle
     monkeypatch.delenv("REQUESTS_CA_BUNDLE", raising=False)
     monkeypatch.setenv("SSL_CERT_FILE", str(ca_bundle))
 
-    verify = _get_ssl_verify()
+    verify = get_ssl_verify()
 
     assert isinstance(verify, ssl.SSLContext)
 
@@ -60,7 +60,7 @@ def test_get_ssl_verify_neither_set(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("REQUESTS_CA_BUNDLE", raising=False)
     monkeypatch.delenv("SSL_CERT_FILE", raising=False)
 
-    verify = _get_ssl_verify()
+    verify = get_ssl_verify()
 
     assert verify is True
 
@@ -75,6 +75,6 @@ def test_get_ssl_verify_requests_ca_bundle_precedence(
     monkeypatch.setenv("REQUESTS_CA_BUNDLE", str(ca_bundle))
     monkeypatch.setenv("SSL_CERT_FILE", str(missing))
 
-    verify = _get_ssl_verify()
+    verify = get_ssl_verify()
 
     assert isinstance(verify, ssl.SSLContext)

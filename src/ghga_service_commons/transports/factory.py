@@ -27,7 +27,7 @@ from .ratelimiting import AsyncRateLimitingTransport
 from .retry import AsyncRetryTransport
 
 
-def _get_ssl_verify() -> ssl.SSLContext | bool:
+def get_ssl_verify() -> ssl.SSLContext | bool:
     """Determine the SSL verification setting for outgoing transports.
 
     Honors the standard ``REQUESTS_CA_BUNDLE`` and ``SSL_CERT_FILE`` environment
@@ -61,7 +61,7 @@ class CompositeTransportFactory:
         If provided, a custom base_transport class is used and any limits are ignored.
         Those have to be provided directly to the custom base_transport passed into this method.
         """
-        verify = _get_ssl_verify()
+        verify = get_ssl_verify()
         base_transport = base_transport or (
             AsyncHTTPTransport(limits=limits, verify=verify)
             if limits

@@ -32,7 +32,7 @@ by this handling.
 from httpx import AsyncBaseTransport, AsyncHTTPTransport, Limits, _utils
 
 from .config import CompositeCacheConfig, CompositeConfig
-from .factory import CompositeTransportFactory, _get_ssl_verify
+from .factory import CompositeTransportFactory, get_ssl_verify
 
 
 def cached_ratelimiting_retry_proxies(
@@ -87,7 +87,7 @@ def _get_base_proxies_from_env() -> dict[str, AsyncHTTPTransport | None]:
     ``None`` so that NO_PROXY is respected (httpx connects directly for them) instead
     of being silently routed through a proxy.
     """
-    verify = _get_ssl_verify()
+    verify = get_ssl_verify()
     return {
         key: (AsyncHTTPTransport(proxy=url, verify=verify) if url is not None else None)
         for key, url in _utils.get_environment_proxies().items()
