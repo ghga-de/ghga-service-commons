@@ -1,0 +1,80 @@
+# Copyright 2021 - 2026 Universität Tübingen, DKFZ, EMBL, and Universität zu Köln
+# for the German Human Genome-Phenome Archive (GHGA)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Tests for the transport factory, including SSL verification handling."""
+
+import shutil
+import ssl
+from pathlib import Path
+
+import certifi
+import pytest
+
+from ghga_service_commons.transports.factory import _get_ssl_verify
+
+
+@pytest.fixture
+def ca_bundle(tmp_path: Path) -> Path:
+    """Provide a path to a real, loadable CA bundle copied into a temp dir."""
+    bundle = tmp_path / "ca-bundle.pem"
+    shutil.copyfile(certifi.where(), bundle)
+    return bundle
+
+
+def test_get_ssl_verify_requests_ca_bundle(
+    monkeypatch: pytest.MonkeyPatch, ca_bundle: Path
+):
+    """REQUESTS_CA_BUNDLE set -> returns a loaded SSLContext."""
+    monkeypatch.delenv("SSL_CERT_FILE", raising=False)
+    monkeypatch.setenv("REQUESTS_CA_BUNDLE", str(ca_bundle))
+
+    verify = _get_ssl_verify()
+
+    assert isinstance(verify, ssl.SSLContext)
+
+
+def test_get_ssl_verify_ssl_cert_file(monkeypatch: pytest.MonkeyPatch, ca_bundle: Path):
+    """SSL_CERT_FILE set (REQUESTS_CA_BUNDLE unset) -> returns a loaded SSLContext."""
+    monkeypatch.delenv("REQUESTS_CA_BUNDLE", raising=False)
+    monkeypatch.setenv("SSL_CERT_FILE", str(ca_bundle))
+
+    verify = _get_ssl_verify()
+
+    assert isinstance(verify, ssl.SSLContext)
+
+
+def test_get_ssl_verify_neither_set(monkeypatch: pytest.MonkeyPatch):
+    """Neither env var set -> returns True (httpx default = certifi)."""
+    monkeypatch.delenv("REQUESTS_CA_BUNDLE", raising=False)
+    monkeypatch.delenv("SSL_CERT_FILE", raising=False)
+
+    verify = _get_ssl_verify()
+
+    assert verify is True
+
+
+def test_get_ssl_verify_requests_ca_bundle_precedence(
+    monkeypatch: pytest.MonkeyPatch, ca_bundle: Path, tmp_path: Path
+):
+    """Both set -> REQUESTS_CA_BUNDLE takes precedence over SSL_CERT_FILE."""
+    # Point SSL_CERT_FILE at a non-existent path; if it were used, loading the
+    # context would raise. Successful loading proves REQUESTS_CA_BUNDLE won.
+    missing = tmp_path / "does-not-exist.pem"
+    monkeypatch.setenv("REQUESTS_CA_BUNDLE", str(ca_bundle))
+    monkeypatch.setenv("SSL_CERT_FILE", str(missing))
+
+    verify = _get_ssl_verify()
+
+    assert isinstance(verify, ssl.SSLContext)
