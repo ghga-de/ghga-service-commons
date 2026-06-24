@@ -89,6 +89,6 @@ def _get_base_proxies_from_env() -> dict[str, AsyncHTTPTransport | None]:
     """
     verify = get_ssl_verify()
     return {
-        key: (AsyncHTTPTransport(proxy=url, verify=verify) if url is not None else None)
+        key: None if url is None else (AsyncHTTPTransport(proxy=url, verify=verify))
         for key, url in _utils.get_environment_proxies().items()
     }
