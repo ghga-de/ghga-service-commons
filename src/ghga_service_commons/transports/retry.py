@@ -17,7 +17,6 @@
 
 import time
 from collections.abc import Callable
-from contextlib import suppress
 from logging import getLogger
 from types import TracebackType
 from typing import Any
@@ -56,30 +55,58 @@ def _log_retry_stats(retry_state: RetryCallState):
     function_name = retry_state.fn.__qualname__
     attempt_number = retry_state.attempt_number
 
-    # Get internal statistics from the current retry object
-    stats = retry_state.retry_object.statistics
-    stats["function_name"] = function_name
-    stats["time_elapsed"] = round(time.monotonic() - stats["start_time"], 3)
-    stats["start_time"] = round(stats["start_time"], 3)
-    stats["idle_for"] = round(stats["idle_for"], 3)
+    # Build stats from the per-call retry_state. The retry_object's `statistics` dict is
+    # shared across all requests using this transport, so mutating it here would corrupt
+    # the figures of concurrently in-flight requests.
+    stats: dict[str, Any] = {
+        "function_name": function_name,
+        "attempt_number": attempt_number,
+        "start_time": round(retry_state.start_time, 3),
+        "idle_for": round(retry_state.idle_for, 3),
+        "time_elapsed": round(time.monotonic() - retry_state.start_time, 3),
+    }
 
-    # Enrich with details from current attempt for debugging
-    if outcome := retry_state.outcome:
-        try:
-            result = outcome.result()
-        except Exception as exc:
+    # Enrich with details from the current attempt for debugging. Inspect the outcome
+    # without calling `.result()` on a failure, which would reraise and add a a frame to
+    # the traceback that's only noise.
+    if (outcome := retry_state.outcome) is not None:
+        if outcome.failed:
+            exc = outcome.exception()
             stats["exception_type"] = type(exc)
             stats["exception_message"] = str(exc)
-        else:
-            if isinstance(result, httpx.Response):
-                stats["response_status_code"] = result.status_code
-                stats["response_headers"] = result.headers
+        elif isinstance(result := outcome.result(), httpx.Response):
+            stats["response_status_code"] = result.status_code
+            stats["response_headers"] = result.headers
 
     log.info(
         "Retry attempt number %i for function %s.",
         attempt_number,
         function_name,
         extra=stats,
+    )
+
+
+def _log_before_attempt(retry_state: RetryCallState):
+    """Basic logger printing the function name and attempt number before each attempt."""
+    if not retry_state.fn:
+        log.debug("No wrapped function found in retry state.")
+        return
+
+    function_name = retry_state.fn.__qualname__
+    attempt_number = retry_state.attempt_number
+
+    log.info(
+        "Starting attempt number %i for function %s.",
+        attempt_number,
+        function_name,
+        # `args`/`kwargs` are reserved LogRecord attribute names, so the call arguments
+        # are exposed under non-clashing keys.
+        extra={
+            "function_name": function_name,
+            "attempt_number": attempt_number,
+            "call_args": retry_state.args,
+            "call_kwargs": retry_state.kwargs,
+        },
     )
 
 
@@ -92,15 +119,18 @@ class wait_exponential_ignore_429(wait_exponential):  # noqa: N801
 
     def __call__(self, retry_state: RetryCallState) -> float:
         """Copied from base class and adjusted."""
-        if retry_state.outcome:
-            with suppress(Exception):
-                result = retry_state.outcome.result()
-                if (
-                    isinstance(result, httpx.Response)
-                    and result.status_code == 429
-                    and not result.headers.get("Should-Wait")
-                ):
-                    return 0
+        # Only read a successful outcome's result. Calling `.result()` on a failed outcome
+        # re-raises the stored exception instance and appends this frame to its traceback,
+        # polluting the eventual traceback even though the exception is caught here.
+        outcome = retry_state.outcome
+        if outcome is not None and not outcome.failed:
+            result = outcome.result()
+            if (
+                isinstance(result, httpx.Response)
+                and result.status_code == 429
+                and not result.headers.get("Should-Wait")
+            ):
+                return 0
         try:
             exp = self.exp_base ** (retry_state.attempt_number - 1)
             result = self.multiplier * exp
@@ -118,13 +148,14 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
     so their retry-after header can be dealt with corrctly, if present.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         config: RetryTransportConfig,
         transport: httpx.AsyncBaseTransport,
         wait_strategy: Callable[[RetryTransportConfig], Any] = _default_wait_strategy,
         stop_strategy: Callable[[RetryTransportConfig], Any] = _default_stop_strategy,
         stats_logger: Callable[[RetryCallState], Any] = _log_retry_stats,
+        before_logger: Callable[[RetryCallState], Any] = _log_before_attempt,
     ) -> None:
         self._transport = transport
         self._retry_handler = _configure_retry_handler(
@@ -132,6 +163,7 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
             wait_strategy=wait_strategy,
             stop_strategy=stop_strategy,
             stats_logger=stats_logger,
+            before_logger=before_logger,
         )
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
@@ -160,6 +192,7 @@ def _configure_retry_handler(
     wait_strategy: Callable[[RetryTransportConfig], Any],
     stop_strategy: Callable[[RetryTransportConfig], Any],
     stats_logger: Callable[[RetryCallState], Any],
+    before_logger: Callable[[RetryCallState], Any],
 ):
     """Configure the AsyncRetrying instance that is used for handling retryable responses/exceptions."""
     return AsyncRetrying(
@@ -181,5 +214,6 @@ def _configure_retry_handler(
         ),
         stop=stop_strategy(config),
         wait=wait_strategy(config),
+        before=before_logger,
         after=stats_logger,
     )
