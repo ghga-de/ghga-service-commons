@@ -68,13 +68,23 @@ def test_get_ssl_verify_neither_set(monkeypatch: pytest.MonkeyPatch):
 def test_get_ssl_verify_requests_ca_bundle_precedence(
     monkeypatch: pytest.MonkeyPatch, ca_bundle: Path, tmp_path: Path
 ):
-    """Both set -> REQUESTS_CA_BUNDLE takes precedence over SSL_CERT_FILE."""
-    # Point SSL_CERT_FILE at a non-existent path; if it were used, loading the
-    # context would raise. Successful loading proves REQUESTS_CA_BUNDLE won.
-    missing = tmp_path / "does-not-exist.pem"
+    """Both set and both loadable -> REQUESTS_CA_BUNDLE wins over SSL_CERT_FILE.
+
+    Both env vars point to valid, loadable bundles that differ in content, so the
+    loaded CA set identifies which file was actually used: the full certifi bundle
+    (REQUESTS_CA_BUNDLE) versus a single-cert subset (SSL_CERT_FILE).
+    """
+    single_cert_bundle = tmp_path / "single-cert.pem"
+    marker = "-----END CERTIFICATE-----"
+    first_cert = ca_bundle.read_text().split(marker)[0] + marker + "\n"
+    single_cert_bundle.write_text(first_cert)
+
     monkeypatch.setenv("REQUESTS_CA_BUNDLE", str(ca_bundle))
-    monkeypatch.setenv("SSL_CERT_FILE", str(missing))
+    monkeypatch.setenv("SSL_CERT_FILE", str(single_cert_bundle))
 
     verify = get_ssl_verify()
 
     assert isinstance(verify, ssl.SSLContext)
+    expected = ssl.create_default_context(cafile=str(ca_bundle))
+    assert len(verify.get_ca_certs()) == len(expected.get_ca_certs())
+    assert len(verify.get_ca_certs()) > 1
