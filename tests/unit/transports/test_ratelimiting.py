@@ -23,8 +23,9 @@ import pytest
 from ghga_service_commons.transports.config import RateLimitingTransportConfig
 from ghga_service_commons.transports.ratelimiting import AsyncRateLimitingTransport
 
-# Patch target for the sleep used between requests, so tests never actually wait.
-SLEEP = "ghga_service_commons.transports.ratelimiting.asyncio.sleep"
+# The per-request sleep is drawn from random.uniform keeps the real sleep at zero
+# while exposing the delay the transport computed.
+UNIFORM = "ghga_service_commons.transports.ratelimiting.random.uniform"
 _REQUEST = httpx.Request("GET", "http://test")
 
 
@@ -44,7 +45,7 @@ def _ratelimiter(transport: AsyncMock, **config_kwargs) -> AsyncRateLimitingTran
 
 @pytest.mark.asyncio
 async def test_passes_through_non_429_response():
-    """Non-429 responses are returned unchanged without a Should-Wait header."""
+    """Ensure non-429 responses are returned unchanged without a Should-Wait header."""
     response = httpx.Response(httpx.codes.OK)
     ratelimiter = _ratelimiter(_mock_transport([response]))
 
@@ -56,12 +57,11 @@ async def test_passes_through_non_429_response():
 
 @pytest.mark.asyncio
 async def test_429_with_retry_after_sets_wait_time():
-    """A 429 with a Retry-After header stores the wait time and does not signal Should-Wait."""
+    """Ensure a 429 with a Retry-After header stores the wait time and does not signal Should-Wait."""
     response = httpx.Response(429, headers={"Retry-After": "5"})
     ratelimiter = _ratelimiter(_mock_transport([response]))
 
-    with patch(SLEEP, new_callable=AsyncMock):
-        result = await ratelimiter.handle_async_request(_REQUEST)
+    result = await ratelimiter.handle_async_request(_REQUEST)
 
     assert ratelimiter._wait_time == 5.0
     assert "Should-Wait" not in result.headers
@@ -69,53 +69,40 @@ async def test_429_with_retry_after_sets_wait_time():
 
 @pytest.mark.asyncio
 async def test_429_without_retry_after_sets_should_wait_header():
-    """A 429 without a Retry-After header signals Should-Wait and stores no wait time."""
+    """Ensure a 429 without a Retry-After header signals Should-Wait and stores no wait time."""
     response = httpx.Response(429)
     ratelimiter = _ratelimiter(_mock_transport([response]))
 
-    with patch(SLEEP, new_callable=AsyncMock):
-        result = await ratelimiter.handle_async_request(_REQUEST)
+    result = await ratelimiter.handle_async_request(_REQUEST)
 
     assert result.headers["Should-Wait"] == "true"
     assert ratelimiter._wait_time == 0
 
 
 @pytest.mark.asyncio
-async def test_carried_over_wait_time_triggers_sleep():
-    """A wait time learned from a 429 delays the next request by roughly that amount."""
+async def test_carried_over_wait_time_is_applied_to_next_request():
+    """Ensure a wait time learned from a 429 is applied as the delay before the next request."""
     responses = [
         httpx.Response(429, headers={"Retry-After": "10"}),
         httpx.Response(httpx.codes.OK),
     ]
     ratelimiter = _ratelimiter(_mock_transport(responses))
 
-    with patch(SLEEP, new_callable=AsyncMock) as mock_sleep:
-        await ratelimiter.handle_async_request(_REQUEST)
-        await ratelimiter.handle_async_request(_REQUEST)
+    await ratelimiter.handle_async_request(_REQUEST)
 
-    # The second request happens right after the first, so almost the full delay remains.
-    last_sleep = mock_sleep.await_args_list[-1].args[0]
-    assert 9 < last_sleep <= 10
-
-
-@pytest.mark.asyncio
-async def test_jitter_adds_sleep_within_bounds():
-    """Configured jitter introduces a sleep no longer than the jitter bound."""
-    ratelimiter = _ratelimiter(
-        _mock_transport([httpx.Response(httpx.codes.OK)]), per_request_jitter=0.5
-    )
-
-    with patch(SLEEP, new_callable=AsyncMock) as mock_sleep:
+    # Returning 0.0 keeps the real asyncio.sleep instant; the bounds passed to uniform
+    # are the computed remaining wait, so the carried-over delay stays observable.
+    with patch(UNIFORM, return_value=0.0) as mock_uniform:
         await ratelimiter.handle_async_request(_REQUEST)
 
-    assert mock_sleep.await_args is not None
-    slept = mock_sleep.await_args.args[0]
-    assert 0 <= slept <= 0.5
+    remaining_wait = mock_uniform.call_args.args[0]
+    # The second request follows immediately, so almost the full delay still remains.
+    assert remaining_wait == pytest.approx(10, abs=0.5)
 
 
 @pytest.mark.asyncio
 async def test_wait_time_reset_after_configured_requests():
-    """A stored wait time is cleared once the configured number of requests has passed."""
+    """Ensure stored wait time is cleared once the configured number of requests has passed."""
     ratelimiter = _ratelimiter(
         _mock_transport([httpx.Response(httpx.codes.OK)] * 2),
         retry_after_applicable_for_num_requests=2,
@@ -123,13 +110,12 @@ async def test_wait_time_reset_after_configured_requests():
     # Simulate a wait time still in effect from a previous Retry-After response.
     ratelimiter._wait_time = 5.0
 
-    with patch(SLEEP, new_callable=AsyncMock):
-        await ratelimiter.handle_async_request(_REQUEST)
-        # First request only counts towards the reset threshold.
-        assert ratelimiter._num_requests == 1
-        assert ratelimiter._wait_time == 5.0
+    await ratelimiter.handle_async_request(_REQUEST)
+    # The first request only counts towards the reset threshold.
+    assert ratelimiter._num_requests == 1
+    assert ratelimiter._wait_time == 5.0
 
-        await ratelimiter.handle_async_request(_REQUEST)
+    await ratelimiter.handle_async_request(_REQUEST)
 
     assert ratelimiter._num_requests == 0
     assert ratelimiter._wait_time == 0

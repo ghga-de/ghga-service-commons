@@ -99,7 +99,7 @@ def test_get_ssl_verify_requests_ca_bundle_precedence(
 
 
 def test_create_ratelimiting_retry_transport_layers_transports():
-    """The retry transport wraps a rate limiting transport over an HTTP transport."""
+    """Ensure the retry transport wraps a rate limiting transport over an HTTP transport."""
     transport = CompositeTransportFactory.create_ratelimiting_retry_transport(
         CompositeConfig()
     )
@@ -111,7 +111,7 @@ def test_create_ratelimiting_retry_transport_layers_transports():
 
 
 def test_create_ratelimiting_retry_transport_uses_custom_base():
-    """A provided base transport is used at the bottom of the stack."""
+    """Ensure a provided base transport is used at the bottom of the stack."""
     base = AsyncHTTPTransport()
 
     transport = CompositeTransportFactory.create_ratelimiting_retry_transport(

@@ -55,9 +55,8 @@ def _log_retry_stats(retry_state: RetryCallState):
     function_name = retry_state.fn.__qualname__
     attempt_number = retry_state.attempt_number
 
-    # Build stats from the per-call retry_state. The retry_object's `statistics` dict is
-    # shared across all requests using this transport, so mutating it here would corrupt
-    # the figures of concurrently in-flight requests.
+    # Build stats from the per-call retry_state. Don't mutate the retry_object's `statistics`
+    # dict as it's shared across all requests using this transport.
     stats: dict[str, Any] = {
         "function_name": function_name,
         "attempt_number": attempt_number,
@@ -66,9 +65,7 @@ def _log_retry_stats(retry_state: RetryCallState):
         "time_elapsed": round(time.monotonic() - retry_state.start_time, 3),
     }
 
-    # Enrich with details from the current attempt for debugging. Inspect the outcome
-    # without calling `.result()` on a failure, which would reraise and add a a frame to
-    # the traceback that's only noise.
+    # Enrich with details from the current attempt for debugging.
     if (outcome := retry_state.outcome) is not None:
         if outcome.failed:
             exc = outcome.exception()
@@ -119,9 +116,8 @@ class wait_exponential_ignore_429(wait_exponential):  # noqa: N801
 
     def __call__(self, retry_state: RetryCallState) -> float:
         """Copied from base class and adjusted."""
-        # Only read a successful outcome's result. Calling `.result()` on a failed outcome
-        # re-raises the stored exception instance and appends this frame to its traceback,
-        # polluting the eventual traceback even though the exception is caught here.
+        # Only read a successful outcome's result. Calling `.result()` pollutes the traceback
+        # if an exception is stored
         outcome = retry_state.outcome
         if outcome is not None and not outcome.failed:
             result = outcome.result()
