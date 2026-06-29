@@ -168,9 +168,28 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
 
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Handles HTTP requests and adds retry logic around calls."""
-        # Strictly pass request as non kwarg arg to work around Otel httpx instrumentation
-        # trying to extract from arg[0]
-        return await self._retry_handler(self._transport.handle_async_request, request)
+        # Track the latest response and close it before issuing the next attempt, leaving
+        # only the final response open to consume by the caller.
+        latest_response: httpx.Response | None = None
+
+        async def _attempt() -> httpx.Response:
+            nonlocal latest_response
+            if latest_response is not None:
+                await latest_response.aclose()
+                latest_response = None
+            # Strictly pass request as non kwarg arg to work around Otel httpx
+            # instrumentation trying to extract from arg[0]
+            latest_response = await self._transport.handle_async_request(request)
+            return latest_response
+
+        try:
+            return await self._retry_handler(_attempt)
+        except BaseException:
+            # Close the current connection on an exception. This should also deal with
+            # the RetryError once all attempts are exhausted
+            if latest_response is not None:
+                await latest_response.aclose()
+            raise
 
     async def aclose(self) -> None:  # noqa: D102
         await self._transport.aclose()
