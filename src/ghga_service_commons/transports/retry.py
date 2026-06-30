@@ -141,7 +141,7 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
     This adds tenacity based retry logic around HTTP calls.
     Custom wait and stop strategies and logging after each attempt can be injected.
     The default wait strategy uses and exponential backoff, but ignores 429 responses,
-    so their retry-after header can be dealt with corrctly, if present.
+    so their retry-after header can be dealt with correctly, if present.
     """
 
     def __init__(  # noqa: PLR0913
