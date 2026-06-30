@@ -48,6 +48,21 @@ class _TrackedResponse(httpx.Response):
         await super().aclose()
 
 
+class _FailingCloseResponse(httpx.Response):
+    """Response whose aclose() always raises, to exercise cleanup error handling.
+
+    Counts close calls so tests can assert the same response is not closed twice.
+    """
+
+    def __init__(self, status_code: int) -> None:
+        super().__init__(status_code=status_code)
+        self.close_calls = 0
+
+    async def aclose(self) -> None:
+        self.close_calls += 1
+        raise RuntimeError("aclose failed")
+
+
 def _no_wait(config: RetryTransportConfig) -> Callable[[RetryCallState], float]:
     """Wait strategy injecting zero delay so retry behavior tests stay fast."""
     return lambda retry_state: 0
@@ -230,6 +245,32 @@ async def test_exhausted_retries_close_last_response():
         await _retry_transport(transport).handle_async_request(_REQUEST)
 
     assert all(response.closed for response in responses)
+
+
+@pytest.mark.asyncio
+async def test_cleanup_close_error_does_not_mask_original_exception():
+    """Ensure a failing aclose() during cleanup does not replace the underlying exception."""
+    responses = [
+        _TrackedResponse(RETRYABLE_STATUS_CODE),
+        _TrackedResponse(RETRYABLE_STATUS_CODE),
+        _FailingCloseResponse(RETRYABLE_STATUS_CODE),
+    ]
+    transport = _mock_transport(responses)  # type: ignore[arg-type]
+
+    with pytest.raises(RetryError):
+        await _retry_transport(transport).handle_async_request(_REQUEST)
+
+
+@pytest.mark.asyncio
+async def test_pre_attempt_close_error_clears_latest_response():
+    """Ensure a failing pre-attempt aclose() clears the reference so it is not closed twice."""
+    failing = _FailingCloseResponse(RETRYABLE_STATUS_CODE)
+    transport = _mock_transport([failing])
+
+    with pytest.raises(RuntimeError):
+        await _retry_transport(transport).handle_async_request(_REQUEST)
+
+    assert failing.close_calls == 1
 
 
 @pytest.mark.asyncio

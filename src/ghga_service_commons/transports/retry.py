@@ -171,8 +171,11 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
         async def _attempt() -> httpx.Response:
             nonlocal latest_response
             if latest_response is not None:
-                await latest_response.aclose()
-                latest_response = None
+                # Always clear the reference so a later cleanup doesn't try to close the same response again.
+                try:
+                    await latest_response.aclose()
+                finally:
+                    latest_response = None
             # Strictly pass request as non kwarg arg to work around Otel httpx
             # instrumentation trying to extract from arg[0]
             latest_response = await self._transport.handle_async_request(request)
@@ -184,7 +187,12 @@ class AsyncRetryTransport(httpx.AsyncBaseTransport):
             # Close the current connection on an exception. This should also deal with
             # the RetryError once all attempts are exhausted
             if latest_response is not None:
-                await latest_response.aclose()
+                try:
+                    await latest_response.aclose()
+                except Exception:
+                    log.warning(
+                        "Failed to close response during cleanup.", exc_info=True
+                    )
             raise
 
     async def aclose(self) -> None:  # noqa: D102
