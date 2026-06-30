@@ -96,13 +96,9 @@ def _log_before_attempt(retry_state: RetryCallState):
         "Starting attempt number %i for function %s.",
         attempt_number,
         function_name,
-        # `args`/`kwargs` are reserved LogRecord attribute names, so the call arguments
-        # are exposed under non-clashing keys.
         extra={
             "function_name": function_name,
             "attempt_number": attempt_number,
-            "call_args": retry_state.args,
-            "call_kwargs": retry_state.kwargs,
         },
     )
 
