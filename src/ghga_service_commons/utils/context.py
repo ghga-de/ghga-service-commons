@@ -26,9 +26,9 @@ YieldValue = TypeVar("YieldValue")
 
 
 @asynccontextmanager
-async def asyncnullcontext(
+async def asyncnullcontext[YieldValue](
     yield_value: YieldValue,
-) -> AsyncGenerator[YieldValue, None]:
+) -> AsyncGenerator[YieldValue]:
     """Async version of contextlib.nullcontext but with a custom yield value.
 
     Note that you can just use contextlib.nullcontext instead since Python 3.10.

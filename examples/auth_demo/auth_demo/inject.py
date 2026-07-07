@@ -36,7 +36,7 @@ from ghga_service_commons.utils.context import asyncnullcontext
 def prepare_core(
     *,
     config: Config,
-) -> Generator[HangoutPort, None, None]:
+) -> Generator[HangoutPort]:
     """Constructs and initializes all core components and their outbound dependencies."""
     yield Hangout(config=config)
 

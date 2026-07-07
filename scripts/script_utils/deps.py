@@ -15,12 +15,12 @@
 #
 """Contains utils for working with dependencies, lock files, etc."""
 
+import tomllib
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
 
 import casefy
-import tomllib
 
 
 def exclude_from_dependency_list(*, package_name: str, dependencies: list) -> list:
@@ -71,5 +71,4 @@ def get_modified_pyproject(pyproject_toml_path: Path) -> dict[str, Any]:
     with open(pyproject_toml_path, "rb") as pyproject_toml:
         pyproject = tomllib.load(pyproject_toml)
 
-    modified_pyproject = remove_self_dependencies(pyproject)
-    return modified_pyproject
+    return remove_self_dependencies(pyproject)

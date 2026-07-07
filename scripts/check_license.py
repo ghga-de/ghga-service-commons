@@ -35,6 +35,7 @@ GLOBAL_COPYRIGHT_FILE_PATH = ROOT_DIR / ".devcontainer" / "license_header.txt"
 EXCLUDE = [
     ".coveragerc",
     ".devcontainer",
+    ".dockerignore",
     ".editorconfig",
     ".eggs",
     ".git",
@@ -198,7 +199,7 @@ def get_target_files(
         file_.absolute() for file_ in Path(abs_target_dir).rglob("*") if file_.is_file()
     ]
 
-    target_files = [
+    return [
         file_
         for file_ in all_files
         if not (
@@ -207,7 +208,6 @@ def get_target_files(
             or any(re.match(pattern, str(file_)) for pattern in exclude_pattern)
         )
     ]
-    return target_files
 
 
 def normalized_line(line: str, line_comments: list[str] = LINE_COMMENTS) -> str:

@@ -19,7 +19,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from pydantic import BaseModel
 
@@ -30,7 +30,7 @@ __all__ = ["AuthContext", "AuthContextProtocol"]
 AuthContext = TypeVar("AuthContext", bound=BaseModel)
 
 
-class AuthContextProtocol(ABC, Generic[AuthContext]):
+class AuthContextProtocol[AuthContext: BaseModel](ABC):
     """A protocol for retrieving an authentication and authorization context."""
 
     class AuthContextValidationError(RuntimeError):

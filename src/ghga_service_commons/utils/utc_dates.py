@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated
 
 from pydantic import AwareDatetime, TypeAdapter
@@ -25,7 +25,7 @@ from pydantic.functional_validators import BeforeValidator
 
 __all__ = ["UTC", "UTCDatetime", "assert_tz_is_utc", "convert_tz_to_utc", "now_as_utc"]
 
-UTC = timezone.utc
+UTC = UTC
 
 
 def assert_tz_is_utc() -> None:

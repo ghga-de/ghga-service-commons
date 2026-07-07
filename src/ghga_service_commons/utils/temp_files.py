@@ -34,7 +34,7 @@ class NamedBinaryIO(ABC, BinaryIO):
 
 
 @contextmanager
-def big_temp_file(size: int) -> Generator[NamedBinaryIO, None, None]:
+def big_temp_file(size: int) -> Generator[NamedBinaryIO]:
     """Generate a big file with approximately the specified size in bytes."""
     max_size = 2**31 - 1
     original_max = sys.get_int_max_str_digits()

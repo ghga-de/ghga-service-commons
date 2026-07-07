@@ -18,7 +18,7 @@
 
 import socket
 from collections.abc import Callable
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 
 import httpx
 
@@ -35,7 +35,7 @@ def get_free_port() -> int:
 TApp = TypeVar("TApp", bound=Callable[..., Any])
 
 
-class AsyncTestClient(httpx.AsyncClient, Generic[TApp]):
+class AsyncTestClient[TApp: Callable[..., Any]](httpx.AsyncClient):
     """Client for testing ASGI apps in the context of a running async event loop.
 
     Usage: ```
