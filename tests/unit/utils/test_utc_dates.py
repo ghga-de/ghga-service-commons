@@ -31,7 +31,7 @@ from ghga_service_commons.utils.utc_dates import (
 
 def test_utc_constant():
     """Test the UTC constant."""
-    assert UTC is timezone.utc  # noqa: UP017
+    assert UTC is timezone.utc
     try:
         assert UTC is datetime.UTC  # type: ignore
     except AttributeError:  # Python < 3.11

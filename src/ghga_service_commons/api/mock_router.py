@@ -21,7 +21,7 @@ import re
 from collections.abc import Callable
 from functools import partial
 from inspect import signature
-from typing import Any, TypeVar, cast, get_type_hints
+from typing import Any, Generic, TypeVar, cast, get_type_hints
 
 import httpx
 import pytest
@@ -89,7 +89,7 @@ class RegisteredEndpoint(BaseModel):
 ExpectedExceptionTypes = TypeVar("ExpectedExceptionTypes", bound=Exception)
 
 
-class MockRouter[ExpectedExceptionTypes: Exception]:
+class MockRouter(Generic[ExpectedExceptionTypes]):
     """
     A class used to register mock endpoints with decorators similar to FastAPI.
 
