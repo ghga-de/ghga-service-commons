@@ -75,12 +75,10 @@ class S3ObjectStorages(ObjectStorages):
         The object storage instance is created lazily on first access and cached,
         so subsequent calls for the same alias reuse the same instance.
 
-        Caveat: The cached instance is shared across all callers of the same alias.
-        Its underlying boto3 client is thread-safe, but any boto3 resource used is not.
-        This currently affects ``delete_bucket``/``list_all_object_ids``.
-        Avoid running those two operations concurrently on the same alias.
+        Caveat: Its underlying boto3 client is thread-safe, but any boto3 resource used is not.
+        This is not an issue in the current hexkit implementation, but might change if more
+        resource usage is introduced.
         """
-        # TODO: Adjust once hexkit behavior changes
         node_config = self._config.object_storages[endpoint_alias]
         storage = self._storage_cache.get(endpoint_alias)
         if storage is None:
