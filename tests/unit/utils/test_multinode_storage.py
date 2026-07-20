@@ -20,6 +20,7 @@ from unittest.mock import patch
 
 import pytest
 from hexkit.providers.s3 import S3Config
+from pydantic import SecretStr
 
 from ghga_service_commons.utils.multinode_storage import (
     S3ObjectStorageNodeConfig,
@@ -37,7 +38,7 @@ def _make_config() -> S3ObjectStoragesConfig:
             credentials=S3Config(
                 s3_endpoint_url=f"http://localhost/{bucket}",
                 s3_access_key_id="test-key",
-                s3_secret_access_key="test-secret",
+                s3_secret_access_key=SecretStr("test-secret"),
             ),
         )
 
