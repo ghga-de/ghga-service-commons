@@ -94,3 +94,4 @@ def test_for_alias_unknown_alias_raises():
     with patch("ghga_service_commons.utils.multinode_storage.S3ObjectStorage"):
         with pytest.raises(KeyError):
             storages.for_alias("does-not-exist")
+    assert len(storages._storage_cache) == 0
