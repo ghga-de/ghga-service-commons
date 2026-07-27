@@ -13,26 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""A class for mocking API endpoints, for use with ``httpx2.MockTransport``.
-
-:class:`MockRouter` does the routing itself -- endpoints are registered with
-FastAPI-style decorators and matched against the request path and method -- so no
-third-party mocking plugin is required. Mount it on a client via the transport that
-HTTPX2 ships for exactly this purpose::
-
-    app = MockRouter()
-
-    @app.get("/items/{item_id}")
-    def get_item(item_id: int) -> httpx2.Response:
-        return httpx2.Response(status_code=200, json={"id": item_id})
-
-    with httpx2.Client(transport=app.as_transport()) as client:
-        response = client.get("/items/42")
-
-The same transport works with ``httpx2.AsyncClient``. Everything here is typed
-against HTTPX2; registered endpoints take ``httpx2.Request`` and return
-``httpx2.Response``.
-"""
+"""A class for mocking API endpoints, mounted via ``MockRouter.as_transport()``."""
 
 from __future__ import annotations
 
@@ -405,15 +386,9 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
     def handle_request(self, request: httpx2.Request) -> httpx2.Response:
         """Route intercepted request to the registered endpoint and return response.
 
-        This is the handler to hand to ``httpx2.MockTransport``::
-
-            transport = httpx2.MockTransport(mock_router.handle_request)
-            with httpx2.Client(transport=transport) as client: ...
-
         If self.exception_handler is specified, any errors matching self.exceptions_to_handle
         will be passed to the handler. In all other cases, the exception will be
-        re-raised. ``MockTransport`` calls this handler directly, so exceptions
-        surface unchanged at the call site.
+        re-raised.
         """
         try:
             endpoint_function = self._build_loaded_endpoint_function(request)
@@ -427,12 +402,5 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
             raise
 
     def as_transport(self) -> httpx2.MockTransport:
-        """Return an ``httpx2.MockTransport`` that routes through this router.
-
-        Convenience wrapper so tests can mount the router on a client directly::
-
-            with httpx2.Client(transport=mock_router.as_transport()) as client: ...
-
-        The same transport also works with ``httpx2.AsyncClient``.
-        """
+        """Return a transport routing through this router, for Client or AsyncClient."""
         return httpx2.MockTransport(self.handle_request)

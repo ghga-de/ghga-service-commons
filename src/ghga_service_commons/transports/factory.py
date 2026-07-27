@@ -35,11 +35,8 @@ def get_ssl_verify() -> ssl.SSLContext | bool:
 
     If either variable is set, an ``ssl.SSLContext`` loaded from the referenced CA
     bundle is returned. If neither is set, ``True`` is returned so that httpx2 keeps
-    its default behavior, which is to verify against the operating system's trust
-    store via ``truststore``. Note that this differs from httpx 0.x, which verified
-    against certifi's bundled root certificates: deployments on minimal container
-    images must ensure the system CA store is populated (e.g. ``ca-certificates``),
-    or set ``REQUESTS_CA_BUNDLE``/``SSL_CERT_FILE`` explicitly.
+    its default behavior: the OS trust store via ``truststore``, not certifi as in
+    httpx 0.x. Minimal images therefore need a populated system CA store.
     """
     ca_bundle = os.environ.get("REQUESTS_CA_BUNDLE") or os.environ.get("SSL_CERT_FILE")
     if ca_bundle:

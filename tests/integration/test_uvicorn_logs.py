@@ -40,14 +40,9 @@ EXPECTED_FIELDS = {
 
 @pytest.fixture
 def restore_root_logging():
-    """Restore the root logger after a test reconfigures logging globally.
+    """Undo the global root logger changes made by `configure_logging`.
 
-    `configure_logging` mutates the root logger and binds a handler to whatever
-    `sys.stderr` is at call time. Under `capsys` that is a capture buffer which pytest
-    closes during teardown, so leaving the handler installed would point the root
-    logger at a closed stream for the rest of the session -- every later log record
-    would then raise inside logging and spew to stderr. It also raises the root level,
-    which makes those later records more frequent.
+    Under `capsys` it binds a handler to a capture buffer that pytest later closes.
     """
     root = logging.getLogger()
     saved_handlers = root.handlers[:]

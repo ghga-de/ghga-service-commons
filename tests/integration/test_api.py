@@ -16,9 +16,9 @@
 """Test api module."""
 
 import asyncio
-import multiprocessing
 import re
 import time
+from contextlib import suppress
 
 import httpx2
 import pytest
@@ -41,36 +41,16 @@ SERVER_STARTUP_TIMEOUT = 30.0
 SERVER_POLL_INTERVAL = 0.05
 
 
-def _serve(config: ApiConfigBase) -> None:
-    """Run the test server in a child process.
-
-    Defined at module level rather than as a lambda so that it can be pickled for the
-    "spawn" start method.
-    """
-    asyncio.run(run_server(app=app, config=config))
-
-
-async def _get_when_ready(
-    url: str, process: multiprocessing.Process
-) -> httpx2.Response:
-    """Poll `url` until the server answers, then return its response.
-
-    The server runs in a separate process, so it is not ready the instant the process
-    starts. Polling until it answers (rather than sleeping for a fixed interval) keeps
-    this test from failing on slower or more heavily loaded runners -- notably when
-    pytest is driven by an IDE test runner or with coverage enabled, where process
-    startup takes noticeably longer than it does on a bare command line.
-    """
+async def _get_when_ready(url: str, server: asyncio.Task) -> httpx2.Response:
+    """Poll `url` until the server answers, so slow startup doesn't fail the test."""
     deadline = time.monotonic() + SERVER_STARTUP_TIMEOUT
     last_error: Exception | None = None
 
     async with httpx2.AsyncClient() as client:
         while time.monotonic() < deadline:
-            if not process.is_alive():
-                raise AssertionError(
-                    f"Server process exited before becoming ready "
-                    f"(exit code {process.exitcode})"
-                )
+            if server.done():
+                server.result()  # re-raise whatever stopped the server
+                raise AssertionError("Server stopped before becoming ready")
             try:
                 return await client.get(url)
             except httpx2.TransportError as error:
@@ -87,24 +67,17 @@ async def test_run_server():
     config = ApiConfigBase()
     config.port = find_free_port()
 
-    # Use "spawn" rather than the platform default "fork". A forked child inherits the
-    # whole address space of the pytest process, including every open file descriptor.
-    # When pytest is driven by an IDE test runner that streams results back over a
-    # pipe, that child holds a duplicate of the result stream, and killing it mid-run
-    # can cost results for later tests -- which such runners then display as "skipped".
-    # A spawned child is a fresh interpreter and inherits none of it.
-    process = multiprocessing.get_context("spawn").Process(
-        target=_serve, args=(config,)
-    )
-    process.start()
-
+    # run_server deliberately serves on the caller's event loop, so run it as a task
+    # here; cancelling it also exercises its graceful-shutdown path.
+    server = asyncio.create_task(run_server(app=app, config=config))
     try:
         response = await _get_when_ready(
-            f"http://{config.host}:{config.port}/greet", process
+            f"http://{config.host}:{config.port}/greet", server
         )
     finally:
-        process.kill()
-        process.join(timeout=10)
+        server.cancel()
+        with suppress(asyncio.CancelledError):
+            await server
 
     assert response.status_code == 200
     assert response.json() == GREETING
