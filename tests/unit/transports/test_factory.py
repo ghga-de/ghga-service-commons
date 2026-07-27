@@ -21,10 +21,9 @@ from pathlib import Path
 
 import certifi
 import pytest
-from hishel.httpx import AsyncCacheTransport
-from httpx import AsyncHTTPTransport
+from httpx2 import AsyncHTTPTransport
 
-from ghga_service_commons.transports.config import CompositeCacheConfig, CompositeConfig
+from ghga_service_commons.transports.config import CompositeConfig
 from ghga_service_commons.transports.factory import (
     CompositeTransportFactory,
     get_ssl_verify,
@@ -64,7 +63,7 @@ def test_get_ssl_verify_ssl_cert_file(monkeypatch: pytest.MonkeyPatch, ca_bundle
 
 
 def test_get_ssl_verify_neither_set(monkeypatch: pytest.MonkeyPatch):
-    """Neither env var set -> returns True (httpx default = certifi)."""
+    """Neither env var set -> returns True (httpx2 default = certifi)."""
     monkeypatch.delenv("REQUESTS_CA_BUNDLE", raising=False)
     monkeypatch.delenv("SSL_CERT_FILE", raising=False)
 
@@ -121,15 +120,3 @@ def test_create_ratelimiting_retry_transport_uses_custom_base():
     ratelimiting = transport._transport
     assert isinstance(ratelimiting, AsyncRateLimitingTransport)
     assert ratelimiting._transport is base
-
-
-def test_create_cached_ratelimiting_retry_transport_layers_transports():
-    """The cache transport wraps the retry and rate limiting transports."""
-    transport = CompositeTransportFactory.create_cached_ratelimiting_retry_transport(
-        CompositeCacheConfig()
-    )
-
-    assert isinstance(transport, AsyncCacheTransport)
-    retry = transport.next_transport
-    assert isinstance(retry, AsyncRetryTransport)
-    assert isinstance(retry._transport, AsyncRateLimitingTransport)

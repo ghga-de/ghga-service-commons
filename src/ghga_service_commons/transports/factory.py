@@ -13,16 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Provides factories for different flavors of httpx.AsyncHTTPTransport."""
+"""Provides factories for different flavors of httpx2.AsyncHTTPTransport."""
 
 import os
 import ssl
 
-from hishel import AsyncSqliteStorage, FilterPolicy
-from hishel.httpx import AsyncCacheTransport
-from httpx import AsyncBaseTransport, AsyncHTTPTransport, Limits
+from httpx2 import AsyncBaseTransport, AsyncHTTPTransport, Limits
 
-from .config import CompositeCacheConfig, CompositeConfig
+from .config import CompositeConfig
 from .ratelimiting import AsyncRateLimitingTransport
 from .retry import AsyncRetryTransport
 
@@ -36,8 +34,12 @@ def get_ssl_verify() -> ssl.SSLContext | bool:
     chains verify correctly. ``REQUESTS_CA_BUNDLE`` takes precedence.
 
     If either variable is set, an ``ssl.SSLContext`` loaded from the referenced CA
-    bundle is returned. If neither is set, ``True`` is returned so that httpx keeps
-    its default behavior (certifi's bundled root certificates).
+    bundle is returned. If neither is set, ``True`` is returned so that httpx2 keeps
+    its default behavior, which is to verify against the operating system's trust
+    store via ``truststore``. Note that this differs from httpx 0.x, which verified
+    against certifi's bundled root certificates: deployments on minimal container
+    images must ensure the system CA store is populated (e.g. ``ca-certificates``),
+    or set ``REQUESTS_CA_BUNDLE``/``SSL_CERT_FILE`` explicitly.
     """
     ca_bundle = os.environ.get("REQUESTS_CA_BUNDLE") or os.environ.get("SSL_CERT_FILE")
     if ca_bundle:
@@ -46,7 +48,7 @@ def get_ssl_verify() -> ssl.SSLContext | bool:
 
 
 class CompositeTransportFactory:
-    """Produces different flavors of httpx.AsyncHTTPTransports and takes care of wrapping them in the correct order."""
+    """Produces different flavors of httpx2.AsyncHTTPTransports and takes care of wrapping them in the correct order."""
 
     @classmethod
     def _create_common_transport_layers(
@@ -87,28 +89,4 @@ class CompositeTransportFactory:
         """
         return cls._create_common_transport_layers(
             config, base_transport=base_transport, limits=limits
-        )
-
-    @classmethod
-    def create_cached_ratelimiting_retry_transport(
-        cls,
-        config: CompositeCacheConfig,
-        base_transport: AsyncBaseTransport | None = None,
-        limits: Limits | None = None,
-    ) -> AsyncCacheTransport:
-        """Creates a cache transport, wrapping, in sequence, a retry, rate limiting transport and AsyncHTTPTransport.
-
-        If provided, limits are applied to the wrapped AsyncHTTPTransport instance.
-        If provided, a custom base_transport class is used and any limits are ignored.
-        Those have to be provided directly to the custom base_transport passed into this method.
-        """
-        retry_transport = cls._create_common_transport_layers(
-            config, base_transport=base_transport, limits=limits
-        )
-        policy = FilterPolicy()
-        storage = AsyncSqliteStorage(default_ttl=config.client_cache_ttl)
-        return AsyncCacheTransport(
-            next_transport=retry_transport,
-            storage=storage,
-            policy=policy,
         )

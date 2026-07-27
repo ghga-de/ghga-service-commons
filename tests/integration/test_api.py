@@ -19,7 +19,7 @@ import asyncio
 import multiprocessing
 import re
 
-import httpx
+import httpx2
 import pytest
 from fastapi import FastAPI
 
@@ -51,7 +51,7 @@ async def test_run_server():
 
     # run test query:
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx2.AsyncClient() as client:
             response = await client.get(f"http://{config.host}:{config.port}/greet")
     except Exception as exc:
         raise exc
