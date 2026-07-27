@@ -17,6 +17,7 @@
 
 import asyncio
 import json
+import logging
 from contextlib import suppress
 
 import pytest
@@ -37,8 +38,32 @@ EXPECTED_FIELDS = {
 }
 
 
+@pytest.fixture
+def restore_root_logging():
+    """Restore the root logger after a test reconfigures logging globally.
+
+    `configure_logging` mutates the root logger and binds a handler to whatever
+    `sys.stderr` is at call time. Under `capsys` that is a capture buffer which pytest
+    closes during teardown, so leaving the handler installed would point the root
+    logger at a closed stream for the rest of the session -- every later log record
+    would then raise inside logging and spew to stderr. It also raises the root level,
+    which makes those later records more frequent.
+    """
+    root = logging.getLogger()
+    saved_handlers = root.handlers[:]
+    saved_level = root.level
+    try:
+        yield
+    finally:
+        for handler in root.handlers[:]:
+            if handler not in saved_handlers:
+                root.removeHandler(handler)
+        root.handlers[:] = saved_handlers
+        root.setLevel(saved_level)
+
+
 @pytest.mark.asyncio
-async def test_uvicorn_log_format(capsys):
+async def test_uvicorn_log_format(capsys, restore_root_logging):
     """Verify that the uvicorn logs are formatted with the configured logging."""
     test_app = FastAPI()
     config = ApiConfigBase()

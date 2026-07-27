@@ -172,7 +172,7 @@ class AsyncRetryTransport(httpx2.AsyncBaseTransport):
                     await latest_response.aclose()
                 finally:
                     latest_response = None
-            # Strictly pass request as non kwarg arg to work around Otel httpx2
+            # Strictly pass request as non kwarg arg to work around Otel httpx
             # instrumentation trying to extract from arg[0]
             latest_response = await self._transport.handle_async_request(request)
             return latest_response
