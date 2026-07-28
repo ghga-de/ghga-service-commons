@@ -72,6 +72,8 @@ class AsyncRateLimitingTransport(httpx2.AsyncBaseTransport):
             await asyncio.sleep(sleep_for)
 
         # Delegate call and update timestamp
+        # Strictly pass request as non kwarg arg to work around Otel httpx
+        # instrumentation trying to extract from arg[0]
         response = await self._transport.handle_async_request(request)
 
         # Update state
