@@ -105,9 +105,9 @@ def test_typical_client_usage(
 
 def test_compatibility_with_httpx2():
     """Make sure that our Response protocol is compatible with the httpx2 library."""
-    from httpx2 import Response as httpx2Response  # noqa: PLC0415
+    from httpx2 import Response as Httpx2Response  # noqa: PLC0415
 
-    httpx2_response = httpx2Response(status_code=200, content=b'{"hello": "world"}')
+    httpx2_response = Httpx2Response(status_code=200, content=b'{"hello": "world"}')
     response: Response = httpx2_response  # mypy should not complain here
     assert response.status_code == 200
     assert response.json() == {"hello": "world"}
