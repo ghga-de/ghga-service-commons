@@ -402,5 +402,20 @@ class MockRouter(Generic[ExpectedExceptionTypes]):
             raise
 
     def as_transport(self) -> httpx2.MockTransport:
-        """Return a transport routing through this router, for Client or AsyncClient."""
+        """Return a transport routing through this router, for Client or AsyncClient.
+
+        For simple use cases this can be mounted directly on the client:
+        ```
+        httpx2.Client(base_url=BASE_URL, transport=router.as_transport())
+        ```
+
+        For more complex use cases, provide it as the innermost layer of a custom
+        transport stack, so the requests are still routed here after passing through
+        the wrapping transports:
+        ```
+        CompositeTransportFactory.create_ratelimiting_retry_transport(
+            config, base_transport=router.as_transport()
+        )
+        ```
+        """
         return httpx2.MockTransport(self.handle_request)
