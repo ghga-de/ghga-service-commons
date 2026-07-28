@@ -50,9 +50,6 @@ def restore_root_logging():
     try:
         yield
     finally:
-        for handler in root.handlers[:]:
-            if handler not in saved_handlers:
-                root.removeHandler(handler)
         root.handlers[:] = saved_handlers
         root.setLevel(saved_level)
 
