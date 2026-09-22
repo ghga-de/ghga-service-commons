@@ -1,3 +1,11 @@
+> [!IMPORTANT]
+> **ghga-service-commons has moved.** Development continues in the GHGA monorepo at
+> [ghga-de/ghga](https://github.com/ghga-de/ghga), under
+> [`libs/ghga-service-commons`](https://github.com/ghga-de/ghga/tree/main/libs/ghga-service-commons).
+> This repository is being archived and will become read-only; please open issues
+> and pull requests in the monorepo. The `ghga-service-commons` package on PyPI is
+> unaffected and continues to be released from there.
+
 ![tests](https://github.com/ghga-de/ghga-service-commons/actions/workflows/tests.yaml/badge.svg)
 [![PyPI version shields.io](https://img.shields.io/pypi/v/ghga_service_commons.svg)](https://pypi.python.org/pypi/ghga_service_commons/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/ghga_service_commons.svg)](https://pypi.python.org/pypi/ghga_service_commons/)
